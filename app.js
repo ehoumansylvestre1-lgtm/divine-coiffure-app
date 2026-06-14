@@ -639,76 +639,173 @@ function codeOublie() {
   }
 }
 
-// ===== RECOMMANDATIONS AUTOMATIQUES =====
+// ===== RECOMMANDATIONS AUTOMATIQUES — logique investisseur =====
+
+function scoreDejaVu(toutes) {
+  const maintenant = new Date();
+  const vues = {};
+  toutes.forEach(c => {
+    if (c.telephone && (!vues[c.telephone] || c.date > vues[c.telephone].date))
+      vues[c.telephone] = c;
+  });
+  const nbARappeler = Object.values(vues)
+    .filter(c => Math.floor((maintenant - new Date(c.date)) / 86400000) >= 21).length;
+  return nbARappeler;
+}
+
+function calculerScore(ca, projete, txOnglerie, nbARappeler, tendance) {
+  let score = 0;
+  // CA vs objectif (40 pts)
+  score += Math.min(40, Math.round((ca / OBJECTIF_CIBLE) * 40));
+  // Tendance semaine (20 pts)
+  if (tendance === 'hausse')   score += 20;
+  else if (tendance === 'stable') score += 10;
+  // Onglerie (10 pts)
+  if (txOnglerie >= 6)  score += 10;
+  else if (txOnglerie >= 3) score += 5;
+  // Rétention clientes (15 pts)
+  score += Math.max(0, 15 - nbARappeler * 2);
+  // Projection fin mois (15 pts)
+  score += Math.min(15, Math.round((projete / OBJECTIF_CIBLE) * 15));
+  return Math.min(100, score);
+}
+
+function labelPhase(ca) {
+  if (ca >= 400000) return { num: 3, label: 'Phase 3 — Duplication' };
+  if (ca >= 280000) return { num: 2, label: 'Phase 2 — Délégation' };
+  return { num: 1, label: 'Phase 1 — Stabilisation' };
+}
+
+function tendanceSemaine(toutes) {
+  const aujourd = new Date();
+  const debutSemaine = new Date(aujourd);
+  debutSemaine.setDate(aujourd.getDate() - aujourd.getDay()); // lundi
+
+  const debutPrecedente = new Date(debutSemaine);
+  debutPrecedente.setDate(debutSemaine.getDate() - 7);
+
+  const caSemaine = toutes
+    .filter(c => c.date >= debutSemaine.toISOString().slice(0,10))
+    .reduce((s, c) => s + c.montant, 0);
+  const caPrecedente = toutes
+    .filter(c => c.date >= debutPrecedente.toISOString().slice(0,10) && c.date < debutSemaine.toISOString().slice(0,10))
+    .reduce((s, c) => s + c.montant, 0);
+
+  if (caPrecedente === 0) return { tendance: 'debut', caSemaine, caPrecedente };
+  const delta = caSemaine - caPrecedente;
+  const pourcent = Math.round((delta / caPrecedente) * 100);
+  if (pourcent >= 10) return { tendance: 'hausse', delta, pourcent, caSemaine, caPrecedente };
+  if (pourcent <= -10) return { tendance: 'baisse', delta, pourcent, caSemaine, caPrecedente };
+  return { tendance: 'stable', delta, pourcent, caSemaine, caPrecedente };
+}
 
 function genererRecommandations(filtrees) {
   const recs = [];
   const today = new Date();
-  const jourDuMois   = today.getDate();
-  const totalJours   = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const jourDuMois    = today.getDate();
+  const totalJours    = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   const joursRestants = totalJours - jourDuMois;
   const ca = filtrees.reduce((s, c) => s + c.montant, 0);
+  const toutes = chargerClientes();
 
-  // Projection fin de mois (uniquement en vue mois actuel)
-  if (periodeActuelle === 'mois-actuel' && jourDuMois > 0) {
-    const projete = Math.round((ca / jourDuMois) * totalJours);
-    if (projete >= OBJECTIF_CIBLE) {
-      recs.push({ type: 'succes', icone: '🏆', titre: 'Excellent rythme !',
-        texte: `À ce rythme, vous projetez ${formaterMontant(projete)} pour le mois. L'objectif de ${formaterMontant(OBJECTIF_CIBLE)} est en vue !` });
-    } else if (joursRestants > 0) {
-      const parJour = Math.round((OBJECTIF_CIBLE - ca) / joursRestants);
-      recs.push({ type: 'action', icone: '🎯', titre: 'Pour atteindre l\'objectif',
-        texte: `Il manque ${formaterMontant(OBJECTIF_CIBLE - ca)} en ${joursRestants} jours restants, soit ${formaterMontant(parJour)}/jour. Propulsion promo ce week-end !` });
+  // --- Projection et tendance ---
+  const projete = jourDuMois > 0 ? Math.round((ca / jourDuMois) * totalJours) : 0;
+  const { tendance, delta, pourcent, caSemaine, caPrecedente } = tendanceSemaine(toutes);
+  const txOnglerie   = filtrees.filter(c => c.service === 'onglerie').length;
+  const nbARappeler  = scoreDejaVu(toutes);
+  const score        = calculerScore(ca, projete, txOnglerie, nbARappeler, tendance);
+  const phase        = labelPhase(periodeActuelle === 'mois-actuel' ? projete : ca);
+
+  // Stocker le score pour l'afficher dans le header du bilan
+  const scoreEl = document.getElementById('score-sante');
+  if (scoreEl) {
+    scoreEl.textContent = score + '/100';
+    scoreEl.className   = score >= 70 ? 'score-ok' : score >= 45 ? 'score-moyen' : 'score-faible';
+  }
+
+  // === SIGNAL 1 : TENDANCE SEMAINE (logique investisseur) ===
+  if (periodeActuelle === 'mois-actuel') {
+    if (tendance === 'baisse') {
+      recs.push({ type: 'danger', icone: '📉', titre: `Régression : −${Math.abs(pourcent)}% vs semaine passée`,
+        texte: `Les ventes baissent (${formaterMontant(caSemaine)} cette semaine vs ${formaterMontant(caPrecedente)} la semaine passée). Discutez avec les coiffeuses de leur méthode de proposition. Si la tendance ne s'inverse pas en 7 jours → activer les promos ciblées immédiatement.` });
+    } else if (tendance === 'hausse') {
+      recs.push({ type: 'succes', icone: '📈', titre: `Progression : +${pourcent}% vs semaine passée`,
+        texte: `Le salon est en accélération (${formaterMontant(caSemaine)} cette semaine vs ${formaterMontant(caPrecedente)}). Maintenez ce rythme — continuez ce qui fonctionne.` });
+    } else if (tendance === 'stable' && ca > 0) {
+      recs.push({ type: 'action', icone: '➡️', titre: 'Rythme stable — mais insuffisant',
+        texte: `Les ventes stagnent d'une semaine à l'autre. Pas d'urgence, mais sans action, l'objectif de ${formaterMontant(OBJECTIF_CIBLE)} ne sera pas atteint. Augmentez la fréquence des WhatsApp Status + relancez les clientes inactives.` });
     }
   }
 
-  // Onglerie sous-exploitée
-  const txOnglerie = filtrees.filter(c => c.service === 'onglerie').length;
-  if (txOnglerie < 4) {
-    recs.push({ type: 'alerte', icone: '💅', titre: `Onglerie : ${txOnglerie} cliente(s) seulement`,
-      texte: `La formation coûte 100 000 FCFA — rentabilisez-la. À chaque visite coiffure, proposez : "Je vous fais aussi les ongles ?" — 3 500 FCFA de plus.` });
+  // === SIGNAL 2 : PROJECTION FIN DE MOIS ===
+  if (periodeActuelle === 'mois-actuel' && jourDuMois >= 5) {
+    if (projete >= OBJECTIF_CIBLE * 1.2) {
+      recs.push({ type: 'succes', icone: '🏆', titre: `Projection : ${formaterMontant(projete)} — dépassement en vue`,
+        texte: `Vous projetez ${formaterMontant(projete)} pour le mois. Si ça se confirme, c'est le signal pour préparer la Phase 2 : déléguer davantage à Mme Sylvestre, documenter les processus, envisager une 2e coiffeuse.` });
+    } else if (projete >= OBJECTIF_CIBLE) {
+      recs.push({ type: 'succes', icone: '✅', titre: `Projection : ${formaterMontant(projete)} — objectif atteignable`,
+        texte: `À ce rythme, vous atteindrez l'objectif. Restez régulière jusqu'à la fin du mois.` });
+    } else if (joursRestants > 0) {
+      const parJour = Math.round((OBJECTIF_CIBLE - ca) / joursRestants);
+      recs.push({ type: 'action', icone: '🎯', titre: `Il faut ${formaterMontant(parJour)}/jour sur ${joursRestants} jours`,
+        texte: `Manque ${formaterMontant(OBJECTIF_CIBLE - ca)} pour l'objectif. Sur les ${joursRestants} jours restants, il faut ${formaterMontant(parJour)}/jour. C'est faisable si les jours creux (lun-mer) sont activés avec des promos.` });
+    }
   }
 
-  // Mèches qui progressent → encourager
+  // === SIGNAL 3 : CAPACITÉ SATURÉE → signal d'expansion ===
+  if (periodeActuelle === 'mois-actuel' && projete >= 380000) {
+    recs.push({ type: 'expansion', icone: '🚀', titre: 'Signal d\'expansion : pensez au 2e salon',
+      texte: `À ${formaterMontant(projete)} de projection, vous approchez de la capacité maximale d'un seul salon (917 000 FCFA théoriques). C'est le moment d'étudier l'ouverture d'un 2e salon dans la zone pour dupliquer le modèle.` });
+  }
+
+  // === SIGNAL 4 : ONGLERIE SOUS-EXPLOITÉE ===
+  if (txOnglerie < 4) {
+    recs.push({ type: 'alerte', icone: '💅', titre: `Onglerie : ${txOnglerie} cliente(s) — formation non rentabilisée`,
+      texte: `La formation onglerie a coûté 100 000 FCFA. À 3 500 FCFA/prestation, il faut 29 clientes pour la rentabiliser. À chaque cliente coiffure, proposez systématiquement : "Je vous fais aussi les ongles ?"` });
+  } else if (txOnglerie >= 8) {
+    recs.push({ type: 'succes', icone: '💅', titre: `Onglerie : ${txOnglerie} clientes — bonne progression`,
+      texte: `L'onglerie progresse. Continuez à la proposer systématiquement et envisagez d'afficher les prix dans le salon.` });
+  }
+
+  // === SIGNAL 5 : MÈCHES ===
   const nbMeches = filtrees.filter(c => c.service === 'meches').length;
   if (nbMeches >= 6) {
     const caMeches = filtrees.filter(c => c.service === 'meches').reduce((s, c) => s + c.montant, 0);
-    recs.push({ type: 'succes', icone: '💇', titre: 'Les mèches cartonnent !',
-      texte: `${nbMeches} clientes mèches pour ${formaterMontant(caMeches)}. Continuez à présenter le stock aux clientes coiffure — c'est votre meilleur levier de croissance.` });
+    recs.push({ type: 'succes', icone: '💇', titre: `Mèches : ${formaterMontant(caMeches)} ce mois`,
+      texte: `Les mèches sont votre moteur de croissance. Présentez le stock à chaque cliente coiffure. Pensez aussi à proposer les perruques (prix : 3 000–15 000 FCFA) — marge plus élevée.` });
   }
 
-  // Clientes à rappeler
-  const toutes = chargerClientes();
-  const vuesRappel = {};
-  const maintenant = new Date();
-  toutes.forEach(c => {
-    if (c.telephone && (!vuesRappel[c.telephone] || c.date > vuesRappel[c.telephone].date))
-      vuesRappel[c.telephone] = c;
-  });
-  const nbARappeler = Object.values(vuesRappel)
-    .filter(c => Math.floor((maintenant - new Date(c.date)) / 86400000) >= 21).length;
+  // === SIGNAL 6 : CLIENTES À RAPPELER ===
   if (nbARappeler > 0) {
-    recs.push({ type: 'action', icone: '📞', titre: `${nbARappeler} cliente(s) à relancer maintenant`,
-      texte: `Ces clientes n'ont pas été vues depuis plus de 3 semaines. Un message WhatsApp aujourd'hui peut en ramener 2-3 cette semaine. Allez dans "Aujourd'hui" pour voir leurs numéros.` });
+    recs.push({ type: 'action', icone: '📞', titre: `${nbARappeler} cliente(s) à relancer — argent disponible`,
+      texte: `Ces clientes ont déjà visité le salon mais ne sont pas revenues. Un WhatsApp personnalisé aujourd'hui ("Bonjour [prénom], on vous prépare quelque chose de beau ?") peut ramener 2-3 d'entre elles cette semaine.` });
   }
 
-  // Journées creuses (lun-mer) si assez de données
+  // === SIGNAL 7 : JOURS CREUX ===
   if (filtrees.length >= 10) {
     const caCreux = filtrees
       .filter(c => { const j = new Date(c.date).getDay(); return j >= 1 && j <= 3; })
       .reduce((s, c) => s + c.montant, 0);
-    const semaines = Math.ceil(jourDuMois / 7);
-    const moyCreux = semaines > 0 ? caCreux / (semaines * 3) : 0;
+    const semaines = Math.max(1, Math.ceil(jourDuMois / 7));
+    const moyCreux = caCreux / (semaines * 3);
     if (moyCreux < 6000) {
-      recs.push({ type: 'alerte', icone: '📅', titre: 'Lundi–Mercredi : jours creux',
-        texte: `Moyenne ${formaterMontant(Math.round(moyCreux))}/jour sur lun-mer. Publiez une promo WhatsApp Status le dimanche soir ("Promo lundi !") pour remplir ces jours calmes.` });
+      recs.push({ type: 'alerte', icone: '📅', titre: 'Lundi–Mercredi : jours morts',
+        texte: `Moyenne ${formaterMontant(Math.round(moyCreux))}/jour sur lun-mer. Action concrète : le dimanche soir, publiez sur WhatsApp Status une promo valable lundi seulement ("Coiffure à 2 500 jusqu'à 14h"). Répétez chaque semaine.` });
     }
   }
 
-  // Si aucune recommandation
-  if (recs.length === 0 && filtrees.length === 0) {
-    recs.push({ type: 'info', icone: 'ℹ️', titre: 'Pas encore de données',
-      texte: 'Commencez à enregistrer des prestations — le système produira des conseils personnalisés dès que vous aurez des données.' });
+  // === ALIGNEMENT SUR LA PHASE ACTUELLE ===
+  if (phase.num === 1) {
+    recs.push({ type: 'info', icone: '🗺️', titre: `${phase.label} — votre cap actuel`,
+      texte: `Objectif de la Phase 1 : atteindre 280 000 FCFA/mois régulièrement (bénéfice ~80 000 FCFA). Focus : remplir les jours creux, fidéliser les clientes existantes, activer l'onglerie. La Phase 2 (délégation) ne viendra qu'après 2 mois consécutifs à 280k+.` });
+  } else if (phase.num === 2) {
+    recs.push({ type: 'info', icone: '🗺️', titre: `${phase.label} — vous y êtes presque`,
+      texte: `À ce niveau, préparez la délégation : formez Mme Sylvestre à gérer seule sans votre intervention quotidienne. Documentez chaque processus. Objectif Phase 3 : 400 000 FCFA/mois et ouverture d'un 2e salon dans la zone.` });
+  }
+
+  if (recs.length === 0) {
+    recs.push({ type: 'info', icone: 'ℹ️', titre: 'Pas encore assez de données',
+      texte: 'Enregistrez les prestations chaque jour — le système générera des conseils personnalisés dès la première semaine complète.' });
   }
 
   return recs;

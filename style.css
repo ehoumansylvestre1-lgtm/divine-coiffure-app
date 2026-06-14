@@ -855,10 +855,53 @@ header {
   box-shadow: 0 2px 6px rgba(107,0,170,0.07);
 }
 
-.recommandation-card.succes  { border-left-color: var(--vert); }
-.recommandation-card.action  { border-left-color: var(--violet); }
-.recommandation-card.alerte  { border-left-color: var(--orange); }
-.recommandation-card.info    { border-left-color: var(--texte-doux); }
+.recommandation-card.succes    { border-left-color: var(--vert); }
+.recommandation-card.action    { border-left-color: var(--violet); }
+.recommandation-card.alerte    { border-left-color: var(--orange); }
+.recommandation-card.danger    { border-left-color: var(--rouge); background: #FFF8F8; }
+.recommandation-card.expansion { border-left-color: var(--magenta); background: #FFF0FC; }
+.recommandation-card.info      { border-left-color: var(--texte-doux); }
+
+/* ===== SCORE DE SANTÉ ===== */
+.rec-header-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24px 0 12px;
+}
+
+.rec-header-section h3 {
+  font-size: 12px;
+  color: var(--texte-doux);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+.score-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.score-label {
+  font-size: 10px;
+  color: var(--texte-doux);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#score-sante {
+  font-size: 20px;
+  font-weight: 800;
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+.score-ok     { color: var(--vert);     background: #E8FFF0; }
+.score-moyen  { color: var(--orange);   background: #FFF8E8; }
+.score-faible { color: var(--rouge);    background: #FFF0F0; }
 
 .rec-header {
   display: flex;
