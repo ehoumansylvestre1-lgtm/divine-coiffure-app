@@ -1,12 +1,12 @@
 // ===== DIVINE COIFFURE — Appli tablette =====
 
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxRYxx-XrFL1FsWGskDDF6rP44he2qyXXvSfOQQ_SjrLhXvJ6DN9m5PaVLWSyxDM4cY/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwB4o4-KhnaOZnV3g73M4tnofBe5EQhZBV8oX4b2OsnfXZQXxVKzXjV89G8M-UOUTz/exec';
 
 const CHARGES_FIXES   = 200000;   // charges réelles (186k fixes + ~14k matériaux/produits)
 const OBJECTIF_CIBLE  = 280000;   // phase 1 : +80k de bénéfice net
 const MARKER_POURCENT = Math.round((CHARGES_FIXES / OBJECTIF_CIBLE) * 100); // ~71%
 
-const PIN_MANAGER_DEFAUT = '1234'; // responsable (Mme Sylvestre / Sylvestre)
+const PIN_MANAGER_DEFAUT = '3126'; // responsable (Mme Sylvestre / Sylvestre)
 const PIN_EMPLOYE_DEFAUT = '0000'; // employée — accès limité (saisie + résumé jour)
 const PIN_PAR_DEFAUT     = PIN_MANAGER_DEFAUT;
 let modeAcces = null; // 'manager' ou 'employe'
@@ -910,6 +910,11 @@ function effacerDemoData() {
 // ===== INIT =====
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Migration : si le PIN stocké est encore l'ancien défaut 1234, le remplacer par 3126
+  if (localStorage.getItem('dc_pin') === '1234') {
+    localStorage.setItem('dc_pin', PIN_MANAGER_DEFAUT);
+  }
+
   document.getElementById('ecran-pin').style.display   = 'flex';
   document.getElementById('app-contenu').style.display = 'none';
 
