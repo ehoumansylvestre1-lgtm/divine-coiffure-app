@@ -1,0 +1,791 @@
+/* ===== DIVINE COIFFURE — Style tablette (identité visuelle officielle) ===== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --violet:       #6B00AA;
+  --violet-fonce: #3D006B;
+  --magenta:      #C4009A;
+  --magenta-clair:#E000B4;
+  --fond:         #F8F4FF;
+  --fond-carte:   #FFFFFF;
+  --fond-carte2:  #F0E8FF;
+  --texte:        #1A0030;
+  --texte-doux:   #7A5A9B;
+  --blanc:        #FFFFFF;
+  --vert:         #1DB954;
+  --orange:       #F39C12;
+  --rouge:        #E74C3C;
+  --rayon:        14px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--texte);
+  font-size: 18px;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* ===== EN-TÊTE ===== */
+header {
+  background: linear-gradient(135deg, var(--violet-fonce) 0%, var(--violet) 60%, var(--magenta) 100%);
+  padding: 18px 20px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-logo {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.header-logo .divine {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 22px;
+  color: #FFD6F5;
+  font-weight: 400;
+}
+
+.header-logo .coiffure {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--blanc);
+  letter-spacing: 2px;
+}
+
+.sync-offline {
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.75);
+  padding: 7px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+
+.sync-ok {
+  background: rgba(29, 185, 84, 0.25);
+  color: #7DFFB0;
+  padding: 7px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  border: 1px solid rgba(29,185,84,0.4);
+}
+
+/* ===== ONGLETS ===== */
+.onglets {
+  display: flex;
+  background: var(--violet-fonce);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.onglet {
+  flex: 1;
+  padding: 15px 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.55);
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.onglet.actif {
+  color: #FFD6F5;
+  border-bottom: 3px solid var(--magenta-clair);
+  font-weight: 700;
+}
+
+/* ===== PANNEAUX ===== */
+.panneau {
+  padding: 22px 18px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.panneau h2 {
+  font-size: 19px;
+  color: var(--violet);
+  margin-bottom: 22px;
+  font-weight: 700;
+}
+
+.panneau h3 {
+  font-size: 12px;
+  color: var(--texte-doux);
+  margin: 24px 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+/* ===== CHAMPS DE SAISIE ===== */
+.champ {
+  margin-bottom: 18px;
+}
+
+.champ label {
+  display: block;
+  color: var(--violet);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.champ input,
+.champ select {
+  width: 100%;
+  padding: 15px 16px;
+  background: var(--fond-carte);
+  border: 2px solid #DDD0F0;
+  border-radius: var(--rayon);
+  color: var(--texte);
+  font-size: 17px;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: 0 1px 4px rgba(107,0,170,0.06);
+}
+
+.champ input:focus,
+.champ select:focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgba(107,0,170,0.12);
+}
+
+.champ input::placeholder {
+  color: #BBA8D0;
+}
+
+/* ===== BOUTONS ===== */
+.btn-principal {
+  width: 100%;
+  padding: 19px;
+  background: linear-gradient(135deg, var(--violet) 0%, var(--magenta) 100%);
+  color: var(--blanc);
+  border: none;
+  border-radius: var(--rayon);
+  font-size: 19px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 8px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 16px rgba(196,0,154,0.35);
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn-principal:active {
+  opacity: 0.9;
+  transform: scale(0.99);
+}
+
+.btn-secondaire {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  color: var(--violet);
+  border: 2px solid var(--violet);
+  border-radius: var(--rayon);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background 0.2s;
+}
+
+.btn-secondaire:active {
+  background: rgba(107,0,170,0.08);
+}
+
+/* ===== MESSAGE CONFIRMATION ===== */
+.message-ok {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: #E8FFF0;
+  border: 1px solid var(--vert);
+  border-radius: var(--rayon);
+  color: #0A7A3A;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ===== RÉSUMÉ JOUR / MOIS ===== */
+.resume-jour,
+.resume-mois {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.stat-box {
+  flex: 1;
+  background: var(--fond-carte);
+  border-radius: var(--rayon);
+  padding: 16px;
+  text-align: center;
+  border: 2px solid #EEE5FF;
+  box-shadow: 0 2px 8px rgba(107,0,170,0.08);
+}
+
+.stat-box.magenta {
+  border-color: var(--magenta);
+  background: linear-gradient(135deg, #FFF0FC, #FFE4F8);
+}
+
+.stat-valeur {
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--violet);
+}
+
+.stat-box.magenta .stat-valeur {
+  color: var(--magenta);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--texte-doux);
+  margin-top: 4px;
+  display: block;
+  font-weight: 500;
+}
+
+/* ===== LISTE DES ENTRÉES ===== */
+.liste-entrees {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.entree-item {
+  background: var(--fond-carte);
+  border-radius: var(--rayon);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid var(--magenta);
+  box-shadow: 0 2px 6px rgba(107,0,170,0.07);
+}
+
+.entree-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.entree-nom {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--texte);
+}
+
+.entree-detail {
+  font-size: 13px;
+  color: var(--texte-doux);
+}
+
+.entree-montant {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--magenta);
+  white-space: nowrap;
+}
+
+.entree-sync {
+  font-size: 11px;
+  color: #BBA8D0;
+  margin-top: 2px;
+}
+
+.vide {
+  color: var(--texte-doux);
+  text-align: center;
+  padding: 32px 0;
+  font-size: 15px;
+}
+
+/* ===== BARRE DE PROGRESSION ===== */
+.barre-objectif {
+  background: var(--fond-carte);
+  border-radius: var(--rayon);
+  padding: 18px;
+  margin-bottom: 20px;
+  border: 2px solid #EEE5FF;
+  box-shadow: 0 2px 8px rgba(107,0,170,0.07);
+}
+
+.barre-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--texte-doux);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+#pourcent-objectif {
+  color: var(--violet);
+  font-weight: 800;
+}
+
+.barre-fond {
+  height: 14px;
+  background: #EEE5FF;
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.barre-remplie {
+  height: 100%;
+  background: linear-gradient(to right, var(--violet), var(--magenta));
+  border-radius: 7px;
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+.statut {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 9px 12px;
+  border-radius: 8px;
+}
+
+.statut.ok         { background: #E8FFF0; color: #0A7A3A; }
+.statut.attention  { background: #FFF8E8; color: #A06000; }
+.statut.danger     { background: #FFF0F0; color: #C0001A; }
+
+/* ===== RÉPARTITION SERVICES ===== */
+.service-ligne {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.service-nom {
+  width: 120px;
+  font-size: 13px;
+  color: var(--texte-doux);
+  font-weight: 600;
+}
+
+.service-barre-fond {
+  flex: 1;
+  height: 10px;
+  background: #EEE5FF;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.service-barre {
+  height: 100%;
+  background: linear-gradient(to right, var(--violet), var(--magenta));
+  border-radius: 5px;
+}
+
+.service-montant {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texte);
+  white-space: nowrap;
+  min-width: 95px;
+  text-align: right;
+}
+
+/* ===== CLIENTES À RAPPELER ===== */
+.rappel-item {
+  background: var(--fond-carte);
+  border-radius: var(--rayon);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border-left: 4px solid var(--orange);
+  box-shadow: 0 2px 6px rgba(107,0,170,0.06);
+}
+
+.rappel-nom    { font-weight: 700; color: var(--texte); }
+.rappel-tel    { color: var(--magenta); font-size: 17px; font-weight: 700; margin: 4px 0; }
+.rappel-detail { color: var(--texte-doux); font-size: 13px; }
+
+/* ===== ÉCRAN PIN ===== */
+.ecran-pin {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(160deg, var(--violet-fonce) 0%, var(--violet) 60%, var(--magenta) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.pin-box {
+  text-align: center;
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.pin-logo { margin-bottom: 32px; }
+.pin-logo .divine   { font-family: Georgia, serif; font-style: italic; font-size: 28px; color: rgba(255,255,255,0.8); display: block; }
+.pin-logo .coiffure { font-size: 32px; font-weight: 900; color: #fff; letter-spacing: 3px; display: block; }
+
+.pin-titre {
+  color: rgba(255,255,255,0.75);
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.pin-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.5);
+  background: transparent;
+  transition: all 0.15s;
+}
+
+.pin-dot.rempli {
+  background: #fff;
+  border-color: #fff;
+  transform: scale(1.1);
+}
+
+.pin-erreur {
+  color: #FFB3B3;
+  font-size: 14px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.pin-clavier {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.pin-clavier button {
+  padding: 18px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 14px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.1s;
+  backdrop-filter: blur(4px);
+}
+
+.pin-clavier button:active { background: rgba(255,255,255,0.35); }
+.pin-clavier .effacer { color: rgba(255,255,255,0.7); font-size: 20px; }
+.pin-clavier .vide    { background: transparent; border: none; cursor: default; }
+
+/* ===== DATE TOGGLE (aujourd'hui / hier) ===== */
+.date-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 10px 14px;
+  background: var(--fond-carte);
+  border-radius: var(--rayon);
+  border: 1px solid #DDD0F0;
+}
+
+.date-label-today {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--violet);
+  flex: 1;
+}
+
+.date-label-hier {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--orange);
+  flex: 1;
+}
+
+.btn-hier {
+  background: transparent;
+  border: 1px solid #DDD0F0;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--texte-doux);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.btn-hier:active { background: var(--fond-carte2); }
+
+/* ===== LABELS REQUIS / OPTIONNEL ===== */
+.requis    { color: var(--magenta); font-weight: 700; }
+.optionnel { color: var(--texte-doux); font-size: 12px; font-weight: 400; }
+
+/* ===== PRIX RAPIDES ===== */
+.prix-rapides {
+  margin-bottom: 14px;
+  margin-top: -8px;
+}
+
+.prix-rapides-label {
+  font-size: 12px;
+  color: var(--texte-doux);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.prix-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.prix-chip {
+  padding: 8px 14px;
+  background: var(--fond-carte2);
+  border: 2px solid #DDD0F0;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--violet);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.prix-chip:active,
+.prix-chip.selectionne {
+  background: var(--violet);
+  border-color: var(--violet);
+  color: var(--blanc);
+}
+
+/* ===== SÉLECTEUR DE PÉRIODE ===== */
+.periode-selector {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.btn-periode {
+  padding: 8px 14px;
+  background: var(--fond-carte);
+  border: 2px solid #DDD0F0;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texte-doux);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-periode.actif {
+  background: var(--violet);
+  border-color: var(--violet);
+  color: var(--blanc);
+}
+
+.custom-dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.custom-dates input[type="date"] {
+  padding: 8px 12px;
+  border: 2px solid #DDD0F0;
+  border-radius: var(--rayon);
+  font-size: 14px;
+  color: var(--texte);
+  background: var(--fond-carte);
+  outline: none;
+}
+
+.custom-dates input[type="date"]:focus { border-color: var(--violet); }
+.custom-dates span { color: var(--texte-doux); font-size: 14px; }
+
+.periode-texte {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--violet);
+  margin-bottom: 16px;
+}
+
+/* ===== BARRE PROGRESSION AVEC MARQUEUR ===== */
+.barre-fond {
+  position: relative;
+  height: 14px;
+  background: #EEE5FF;
+  border-radius: 7px;
+  overflow: visible;
+}
+
+.barre-marker {
+  position: absolute;
+  top: -6px;
+  width: 2px;
+  height: 26px;
+  background: var(--orange);
+  border-radius: 2px;
+}
+
+.barre-marker-label {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--orange);
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.barre-legende {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--texte-doux);
+}
+
+.legende-charges { color: var(--orange); font-weight: 600; }
+.legende-objectif { color: var(--violet); font-weight: 700; }
+
+/* ===== SUGGESTIONS AUTOCOMPLETE ===== */
+.suggestions-box {
+  background: var(--fond-carte);
+  border: 2px solid var(--violet);
+  border-top: none;
+  border-radius: 0 0 var(--rayon) var(--rayon);
+  overflow: hidden;
+  margin-top: -4px;
+  box-shadow: 0 6px 16px rgba(107,0,170,0.15);
+}
+
+.suggestion-item {
+  padding: 13px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #EEE5FF;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background 0.15s;
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item:active { background: var(--fond-carte2); }
+
+.sug-nom {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--violet);
+}
+
+.sug-detail {
+  font-size: 12px;
+  color: var(--texte-doux);
+}
+
+/* ===== FOOTER ===== */
+.footer-salon {
+  background: linear-gradient(135deg, var(--violet-fonce) 0%, var(--magenta) 100%);
+  color: var(--blanc);
+  text-align: center;
+  padding: 28px 20px 32px;
+  margin-top: 30px;
+}
+
+.footer-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.footer-divine {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 20px;
+  color: rgba(255,255,255,0.85);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.footer-coiffure {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--blanc);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.footer-tagline {
+  font-size: 14px;
+  color: rgba(255,255,255,0.85);
+  font-style: italic;
+  margin: 10px 0 14px;
+}
+
+.footer-contact {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blanc);
+  margin-bottom: 6px;
+}
+
+.footer-adresse {
+  font-size: 13px;
+  color: rgba(255,255,255,0.75);
+}
+
+/* ===== ZONE SYNC ===== */
+.sync-zone {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--fond-carte2);
+  border-radius: var(--rayon);
+  text-align: center;
+  border: 1px solid #DDD0F0;
+}
+
+.sync-zone p {
+  font-size: 13px;
+  color: var(--texte-doux);
+  margin-bottom: 10px;
+}

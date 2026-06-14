@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Divine Coiffure — Saisie</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== ÉCRAN CODE PIN ===== -->
+  <div id="ecran-pin" class="ecran-pin" style="display:none">
+    <div class="pin-box">
+      <div class="pin-logo">
+        <span class="divine">Divine</span>
+        <span class="coiffure">COIFFURE</span>
+      </div>
+      <p class="pin-titre">Entrez votre code</p>
+      <div class="pin-dots">
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+        <span class="pin-dot"></span>
+      </div>
+      <p id="pin-erreur" class="pin-erreur" style="display:none">Code incorrect — réessayez</p>
+      <div class="pin-clavier">
+        <button onclick="appuyerTouche('1')">1</button>
+        <button onclick="appuyerTouche('2')">2</button>
+        <button onclick="appuyerTouche('3')">3</button>
+        <button onclick="appuyerTouche('4')">4</button>
+        <button onclick="appuyerTouche('5')">5</button>
+        <button onclick="appuyerTouche('6')">6</button>
+        <button onclick="appuyerTouche('7')">7</button>
+        <button onclick="appuyerTouche('8')">8</button>
+        <button onclick="appuyerTouche('9')">9</button>
+        <button class="effacer" onclick="appuyerTouche('effacer')">⌫</button>
+        <button onclick="appuyerTouche('0')">0</button>
+        <button class="vide" disabled></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONTENU PRINCIPAL ===== -->
+  <div id="app-contenu" style="display:none">
+
+  <header>
+    <div class="header-logo">
+      <span class="divine">Divine</span>
+      <span class="coiffure">COIFFURE</span>
+    </div>
+    <div id="sync-status" class="sync-offline">📡 Hors ligne</div>
+  </header>
+
+  <nav class="onglets">
+    <button class="onglet actif" onclick="afficherOnglet('nouvelle-cliente')">➕ Nouvelle</button>
+    <button class="onglet" onclick="afficherOnglet('historique')">📋 Aujourd'hui</button>
+    <button class="onglet" onclick="afficherOnglet('statistiques')">📊 Bilan</button>
+  </nav>
+
+  <!-- ===== ONGLET 1 : NOUVELLE CLIENTE ===== -->
+  <section id="nouvelle-cliente" class="panneau actif">
+    <h2>Enregistrer une prestation</h2>
+
+    <!-- Date (aujourd'hui ou hier) -->
+    <div class="date-toggle">
+      <span id="date-label" class="date-label-today">📅 Aujourd'hui</span>
+      <button type="button" id="btn-hier" class="btn-hier" onclick="toggleHier()">Saisie pour hier ?</button>
+    </div>
+
+    <!-- Prénom avec autocomplete -->
+    <div class="champ">
+      <label for="prenom">Prénom <span class="optionnel">(optionnel)</span></label>
+      <input type="text" id="prenom" placeholder="Ex : Adjoua" autocomplete="off">
+      <div id="suggestions-box" class="suggestions-box" style="display:none"></div>
+    </div>
+
+    <!-- Téléphone -->
+    <div class="champ">
+      <label for="telephone">Téléphone <span class="optionnel">(optionnel mais utile)</span></label>
+      <input type="tel" id="telephone" placeholder="Ex : 07 04 75 04 40" autocomplete="off">
+    </div>
+
+    <!-- Service -->
+    <div class="champ">
+      <label for="service">Prestation <span class="requis">*</span></label>
+      <select id="service" onchange="afficherPrixRapides()">
+        <option value="">— Choisir une prestation —</option>
+        <option value="coiffure">✂️ Coiffure</option>
+        <option value="meches">💇 Mèches</option>
+        <option value="onglerie">💅 Onglerie</option>
+        <option value="lave_cheveux">🚿 Lave cheveux</option>
+        <option value="pose_perruque">👑 Pose perruque</option>
+        <option value="broching">🔥 Broching</option>
+        <option value="produits_soins">🧴 Produit soin</option>
+      </select>
+    </div>
+
+    <!-- Prix rapides -->
+    <div id="prix-rapides" class="prix-rapides" style="display:none">
+      <span class="prix-rapides-label">Prix suggérés :</span>
+      <div id="prix-chips" class="prix-chips"></div>
+    </div>
+
+    <!-- Montant -->
+    <div class="champ">
+      <label for="montant">Montant payé (FCFA) <span class="requis">*</span></label>
+      <input type="number" id="montant" placeholder="Ex : 5 000" min="0" step="500">
+    </div>
+
+    <!-- Note -->
+    <div class="champ">
+      <label for="note">Note <span class="optionnel">(optionnel)</span></label>
+      <input type="text" id="note" placeholder="Ex : première visite, cliente fidèle...">
+    </div>
+
+    <button class="btn-principal" onclick="enregistrerCliente()">✅ ENREGISTRER</button>
+
+    <div id="message-confirmation" class="message-ok" style="display:none"></div>
+  </section>
+
+  <!-- ===== ONGLET 2 : AUJOURD'HUI ===== -->
+  <section id="historique" class="panneau" style="display:none">
+    <h2 id="titre-historique">Aujourd'hui</h2>
+
+    <div class="resume-jour">
+      <div class="stat-box">
+        <span class="stat-valeur" id="nb-clients-jour">0</span>
+        <span class="stat-label">prestations</span>
+      </div>
+      <div class="stat-box magenta">
+        <span class="stat-valeur" id="ca-jour">0</span>
+        <span class="stat-label">FCFA encaissés</span>
+      </div>
+    </div>
+
+    <div id="liste-historique" class="liste-entrees">
+      <p class="vide">Aucune saisie pour aujourd'hui.</p>
+    </div>
+
+    <button class="btn-secondaire" onclick="exporterCSV()">📥 Exporter le tableau Excel (.csv)</button>
+  </section>
+
+  <!-- ===== ONGLET 3 : BILAN ===== -->
+  <section id="statistiques" class="panneau" style="display:none">
+    <h2>Bilan</h2>
+
+    <!-- Sélecteur de période -->
+    <div class="periode-selector">
+      <button class="btn-periode actif" onclick="setPeriode('mois-actuel', this)">Ce mois</button>
+      <button class="btn-periode" onclick="setPeriode('mois-precedent', this)">Mois précédent</button>
+      <button class="btn-periode" onclick="setPeriode('3-mois', this)">3 mois</button>
+      <button class="btn-periode" onclick="setPeriode('custom', this)">Dates...</button>
+    </div>
+    <div id="custom-dates" class="custom-dates" style="display:none">
+      <input type="date" id="date-debut" onchange="rafraichirStats()">
+      <span>au</span>
+      <input type="date" id="date-fin" onchange="rafraichirStats()">
+    </div>
+
+    <p id="periode-affichee" class="periode-texte">juin 2026</p>
+
+    <div class="resume-mois">
+      <div class="stat-box">
+        <span class="stat-valeur" id="nb-clients-mois">0</span>
+        <span class="stat-label">prestations</span>
+      </div>
+      <div class="stat-box magenta">
+        <span class="stat-valeur" id="ca-mois">0</span>
+        <span class="stat-label">FCFA encaissés</span>
+      </div>
+    </div>
+
+    <!-- Barre vers objectif 242k avec marqueur 186k -->
+    <div class="barre-objectif">
+      <div class="barre-label">
+        <span>Progression vers l'objectif</span>
+        <span id="pourcent-objectif">0%</span>
+      </div>
+      <div class="barre-fond">
+        <div class="barre-remplie" id="barre-remplie"></div>
+        <div class="barre-marker" title="Charges couvertes à ce seuil">
+          <span class="barre-marker-label">Charges<br>payées</span>
+        </div>
+      </div>
+      <div class="barre-legende">
+        <span>0</span>
+        <span class="legende-charges">186 000</span>
+        <span class="legende-objectif">242 000 FCFA</span>
+      </div>
+      <div id="statut-mois" class="statut">—</div>
+    </div>
+
+    <h3>Répartition par prestation</h3>
+    <div id="repartition-services"></div>
+
+    <h3>Clientes à rappeler (absentes &gt; 3 semaines)</h3>
+    <div id="clientes-a-rappeler">
+      <p class="vide">Aucune cliente inactive détectée.</p>
+    </div>
+
+    <div class="sync-zone">
+      <p id="derniere-sync">Jamais synchronisé</p>
+      <button class="btn-secondaire" onclick="synchroniser()">🔄 Synchroniser vers Google Sheets</button>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer-salon">
+    <div class="footer-logo">
+      <span class="footer-divine">Divine</span>
+      <span class="footer-coiffure">COIFFURE</span>
+    </div>
+    <p class="footer-tagline">Sublimez votre beauté avec nos soins professionnels !</p>
+    <p class="footer-contact">📞 07 04 75 04 40 &nbsp;·&nbsp; 01 43 08 99 97</p>
+    <p class="footer-adresse">📍 Route Abatta, Carrefour Drogba à 500 M</p>
+  </footer>
+
+  </div><!-- fin app-contenu -->
+
+  <script src="app.js"></script>
+</body>
+</html>
