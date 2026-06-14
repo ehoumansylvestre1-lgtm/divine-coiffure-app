@@ -952,6 +952,27 @@ function sauvegarderEdition() {
   if (periodeActuelle) rafraichirStats();
 }
 
+function supprimerEntree() {
+  if (!entreeEnEdition) return;
+  const clientes = chargerClientes();
+  const entree = clientes.find(c => c.id === entreeEnEdition);
+  if (!entree) return;
+
+  const dejaSync = entree.statut_sync === 'synchronise';
+  const msg = dejaSync
+    ? `Supprimer cette saisie ?\n\n⚠️ Elle est déjà dans Google Sheets — elle sera retirée de l'application mais la ligne restera dans Sheets.`
+    : `Supprimer cette saisie de ${formaterMontant(entree.montant)} pour ${entree.prenom} ?`;
+
+  if (!confirm(msg)) return;
+
+  const nouvelles = clientes.filter(c => c.id !== entreeEnEdition);
+  sauvegarderClientes(nouvelles);
+  document.getElementById('modal-edition').style.display = 'none';
+  entreeEnEdition = null;
+  afficherHistorique();
+  if (periodeActuelle) rafraichirStats();
+}
+
 // ===== PARAMÈTRES — ÉQUIPE, PIN, SAUVEGARDE =====
 
 function afficherMsgParam(texte, ok) {

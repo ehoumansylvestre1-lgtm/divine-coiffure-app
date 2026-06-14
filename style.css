@@ -910,6 +910,18 @@ header {
 .modal-boutons .btn-secondaire {
   flex: 1;
 }
+.btn-supprimer-entree {
+  width: 100%;
+  padding: 12px;
+  background: none;
+  border: 1px solid #F5C0C0;
+  border-radius: var(--rayon);
+  color: var(--rouge);
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.btn-supprimer-entree:active { background: #FFF0F0; }
 
 
 /* ===== BOUTON SETTINGS HEADER ===== */
