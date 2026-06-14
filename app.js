@@ -255,21 +255,31 @@ function sauvegarderDernierSync() {
   localStorage.setItem('dc_derniere_sync', new Date().toLocaleString('fr-FR'));
 }
 
-// ===== HISTORIQUE DU JOUR =====
+// ===== HISTORIQUE DU JOUR (avec filtre hier/aujourd'hui) =====
+
+let dateHistorique = dateAujourdhui();
+
+function setDateHisto(quand, btn) {
+  dateHistorique = quand === 'hier' ? dateHier() : dateAujourdhui();
+  document.querySelectorAll('.btn-histo').forEach(b => b.classList.remove('actif'));
+  if (btn) btn.classList.add('actif');
+  afficherHistorique();
+}
 
 function afficherHistorique() {
   const clientes = chargerClientes();
-  const aujourd  = dateAujourdhui();
+  const aujourd  = dateHistorique;
   const duJour   = clientes.filter(c => c.date === aujourd);
 
   document.getElementById('nb-clients-jour').textContent = duJour.length;
   document.getElementById('ca-jour').textContent = formaterMontant(duJour.reduce((s, c) => s + c.montant, 0));
 
-  const now = new Date();
+  const refDate = new Date(dateHistorique + 'T12:00:00');
   const jours = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
-  const mois  = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+  const moisN = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+  const labelJour = dateHistorique === dateHier() ? '⬅️ Hier — ' : '';
   document.getElementById('titre-historique').textContent =
-    `${jours[now.getDay()]} ${now.getDate()} ${mois[now.getMonth()]} ${now.getFullYear()}`;
+    `${labelJour}${jours[refDate.getDay()]} ${refDate.getDate()} ${moisN[refDate.getMonth()]} ${refDate.getFullYear()}`;
 
   const liste = document.getElementById('liste-historique');
   if (duJour.length === 0) {
@@ -371,23 +381,6 @@ function afficherStatistiques(filtrées, labelPeriode) {
   document.getElementById('barre-remplie').style.width = pourcent + '%';
   document.getElementById('barre-marker').style.left   = MARKER_POURCENT + '%';
 
-  const statut = document.getElementById('statut-mois');
-  if (ca >= OBJECTIF_CIBLE) {
-    statut.textContent = '🏆 Objectif atteint ! Salon rentable ce mois — excellent !';
-    statut.className   = 'statut ok';
-  } else if (ca >= CHARGES_FIXES) {
-    const reste = OBJECTIF_CIBLE - ca;
-    statut.textContent = `✅ Charges couvertes ! Plus que ${formaterMontant(reste)} pour l'objectif.`;
-    statut.className   = 'statut attention';
-  } else if (ca >= CHARGES_FIXES * 0.7) {
-    const manque = CHARGES_FIXES - ca;
-    statut.textContent = `⚠️ En route — encore ${formaterMontant(manque)} pour couvrir les charges.`;
-    statut.className   = 'statut attention';
-  } else {
-    statut.textContent = '📣 Activez les promos et relancez les clientes inactives !';
-    statut.className   = 'statut danger';
-  }
-
   // Répartition services
   const parService = {};
   filtrées.forEach(c => { parService[c.service] = (parService[c.service] || 0) + c.montant; });
@@ -408,6 +401,28 @@ function afficherStatistiques(filtrées, labelPeriode) {
         <span class="service-montant">${formaterMontant(mt)}</span>`;
       repDiv.appendChild(lg);
     });
+  }
+
+  // Mettre à jour le montant sur la barre
+  const montantBarreEl = document.getElementById('ca-barre');
+  if (montantBarreEl) montantBarreEl.textContent = formaterMontant(ca);
+
+  const statut = document.getElementById('statut-mois');
+  if (ca === 0) {
+    statut.textContent = '➡️ Aucune prestation enregistrée sur cette période.';
+    statut.className   = 'statut';
+  } else if (ca >= OBJECTIF_CIBLE) {
+    statut.textContent = '🏆 Objectif atteint ! Salon rentable ce mois — excellent !';
+    statut.className   = 'statut ok';
+  } else if (ca >= CHARGES_FIXES) {
+    statut.textContent = `✅ Charges couvertes ! Plus que ${formaterMontant(OBJECTIF_CIBLE - ca)} pour l'objectif.`;
+    statut.className   = 'statut attention';
+  } else if (ca >= CHARGES_FIXES * 0.7) {
+    statut.textContent = `⚠️ En route — encore ${formaterMontant(CHARGES_FIXES - ca)} pour couvrir les charges.`;
+    statut.className   = 'statut attention';
+  } else {
+    statut.textContent = '📣 Activez les promos et relancez les clientes inactives !';
+    statut.className   = 'statut danger';
   }
 
   afficherClientesARappeler(chargerClientes());
@@ -577,7 +592,7 @@ function configurerModeAcces() {
   const badge       = document.getElementById('mode-badge');
   if (modeAcces === 'employe') {
     if (ongletBilan) ongletBilan.style.display = 'none';
-    if (badge) { badge.textContent = '👤 Employée'; badge.className = 'mode-badge employe'; badge.style.display = 'block'; }
+    if (badge) { badge.textContent = '👤 Gestionnaire'; badge.className = 'mode-badge gestionnaire'; badge.style.display = 'block'; }
   } else {
     if (ongletBilan) ongletBilan.style.display = '';
     if (badge) { badge.textContent = '👑 Responsable'; badge.className = 'mode-badge manager'; badge.style.display = 'block'; }
@@ -835,6 +850,61 @@ function changerPin() {
   if (nouveau !== confirm) { alert('Les codes ne correspondent pas.'); return; }
   localStorage.setItem('dc_pin', nouveau);
   alert('✅ Code modifié avec succès.');
+}
+
+// ===== DONNÉES DE DÉMONSTRATION =====
+
+function chargerDemoData() {
+  if (!confirm('Charger 4 semaines de données démo ? (vos données existantes sont conservées)')) return;
+  const clientes = chargerClientes();
+  const today = new Date();
+  const demoEntrees = [];
+  const prenoms = ['Adjoua','Akissi','Amoin','Bintou','Cécile','Fanta','Grace','Marie','Sandrine','Yasmine'];
+  const tels = ['07 12 34 56 78','05 87 65 43 21','01 23 45 67 89','07 56 78 90 12','07 00 11 22 33'];
+  const scenarios = [
+    { s:'coiffure',      montants:[2500,3000,3500,5000,7000], poids:4 },
+    { s:'meches',        montants:[2200,3000,3500,4500,5500], poids:2 },
+    { s:'onglerie',      montants:[2500,3000,3500],           poids:1 },
+    { s:'pose_perruque', montants:[5000,7000,10000],          poids:1 },
+    { s:'lave_cheveux',  montants:[1000,1500,2000],           poids:1 },
+  ];
+  const pool = [];
+  scenarios.forEach(s => { for(let i=0;i<s.poids;i++) pool.push(s); });
+
+  for (let j = 28; j >= 1; j--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - j);
+    const jourSem = d.getDay();
+    if (jourSem === 0) continue; // pas de dimanche
+    const dateStr = d.toISOString().slice(0,10);
+    // Jours creux lun-mer : 1-2 clientes / jeu-sam : 3-5
+    const nb = jourSem <= 3 ? (Math.random() < 0.25 ? 0 : Math.floor(Math.random()*2)+1) : Math.floor(Math.random()*3)+2;
+    for (let k=0; k<nb; k++) {
+      const svc = pool[Math.floor(Math.random()*pool.length)];
+      const montant = svc.montants[Math.floor(Math.random()*svc.montants.length)];
+      const hr = String(9 + k*2).padStart(2,'0') + ':' + (Math.random()<0.5?'00':'30');
+      demoEntrees.push({
+        id: dateStr + '-demo-' + k,
+        date: dateStr, heure: hr,
+        prenom: prenoms[Math.floor(Math.random()*prenoms.length)],
+        telephone: tels[Math.floor(Math.random()*tels.length)],
+        service: svc.s, montant, note: '', statut_sync: 'en_attente'
+      });
+    }
+  }
+  sauvegarderClientes([...clientes, ...demoEntrees]);
+  afficherHistorique();
+  if (periodeActuelle) rafraichirStats();
+  alert(`✅ ${demoEntrees.length} prestations démo chargées.`);
+}
+
+function effacerDemoData() {
+  if (!confirm('Effacer TOUTES les données démo (les vraies données sont conservées) ?')) return;
+  const clientes = chargerClientes().filter(c => !c.id.includes('-demo-'));
+  sauvegarderClientes(clientes);
+  afficherHistorique();
+  if (periodeActuelle) rafraichirStats();
+  alert('✅ Données démo effacées.');
 }
 
 // ===== INIT =====

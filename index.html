@@ -124,7 +124,13 @@
 
   <!-- ===== ONGLET 2 : AUJOURD'HUI ===== -->
   <section id="historique" class="panneau" style="display:none">
-    <h2 id="titre-historique">Aujourd'hui</h2>
+    <div class="histo-nav">
+      <h2 id="titre-historique">Aujourd'hui</h2>
+      <div class="histo-toggle">
+        <button class="btn-histo actif" onclick="setDateHisto('aujourd-hui', this)">Auj.</button>
+        <button class="btn-histo" onclick="setDateHisto('hier', this)">Hier</button>
+      </div>
+    </div>
 
     <div class="resume-jour">
       <div class="stat-box">
@@ -174,24 +180,25 @@
       </div>
     </div>
 
-    <!-- Barre vers objectif 242k avec marqueur 186k -->
+    <!-- Barre vers objectif -->
     <div class="barre-objectif">
-      <div class="barre-label">
-        <span>Progression vers l'objectif</span>
-        <span id="pourcent-objectif">0%</span>
+      <div class="barre-top-row">
+        <div>
+          <div class="barre-label-titre">Progression vers l'objectif</div>
+          <div id="ca-barre" class="ca-barre-montant">0 FCFA</div>
+        </div>
+        <div class="pct-badge" id="pourcent-objectif">0%</div>
       </div>
       <div class="barre-fond">
         <div class="barre-remplie" id="barre-remplie"></div>
-        <div class="barre-marker" title="Charges couvertes à ce seuil">
-          <span class="barre-marker-label">Charges<br>payées</span>
-        </div>
+        <div class="barre-marker" id="barre-marker"></div>
       </div>
       <div class="barre-legende">
         <span>0</span>
-        <span class="legende-charges">200 000</span>
-        <span class="legende-objectif">280 000 FCFA</span>
+        <span class="legende-charges">↑ 200k charges</span>
+        <span class="legende-objectif">Objectif 280 000 FCFA</span>
       </div>
-      <div id="statut-mois" class="statut">—</div>
+      <div id="statut-mois" class="statut"></div>
     </div>
 
     <h3>Répartition par prestation</h3>
@@ -216,6 +223,10 @@
     <div class="sync-zone">
       <p id="derniere-sync">Jamais synchronisé</p>
       <button class="btn-secondaire" onclick="synchroniser()">🔄 Synchroniser vers Google Sheets</button>
+      <div class="demo-zone">
+        <button class="btn-demo" onclick="chargerDemoData()">🎭 Charger données démo (voir simulation)</button>
+        <button class="btn-demo btn-demo-effacer" onclick="effacerDemoData()">🗑 Effacer démo</button>
+      </div>
     </div>
   </section>
 
