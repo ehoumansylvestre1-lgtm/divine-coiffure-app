@@ -1002,6 +1002,26 @@ function sauvegarderEquipe() {
   }
 }
 
+async function reinitialiserDepuisSheets() {
+  if (!navigator.onLine) { afficherMsgParam('Connexion internet requise.', false); return; }
+  if (!confirm('Effacer TOUTES les données locales de cet appareil et les remplacer par les données de Google Sheets ?\n\nÀ utiliser uniquement si vous voyez des données incorrectes.')) return;
+  try {
+    afficherMsgParam('Chargement depuis Google Sheets…', true);
+    const depuis = new Date(); depuis.setMonth(depuis.getMonth() - 6);
+    const url = GOOGLE_SCRIPT_URL + '?action=lire&depuis=' + depuis.toISOString().slice(0,10);
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!Array.isArray(data)) throw new Error('Format invalide');
+    sauvegarderClientes(data);
+    afficherHistorique();
+    if (periodeActuelle) rafraichirStats();
+    afficherMsgParam(`✅ ${data.length} saisie(s) rechargée(s) depuis Google Sheets.`, true);
+  } catch(err) {
+    afficherMsgParam('❌ Échec : ' + err.message, false);
+  }
+}
+
 async function chargerParametresDepuisSheets() {
   if (!navigator.onLine) return;
   try {
@@ -1116,6 +1136,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const marker = document.getElementById('barre-marker');
   if (marker) marker.style.left = MARKER_POURCENT + '%';
+
+  // Nettoyage automatique des données de démonstration (IDs contenant "-demo-")
+  const avantNettoyage = chargerClientes();
+  const apresNettoyage = avantNettoyage.filter(c => !String(c.id).includes('-demo-'));
+  if (apresNettoyage.length < avantNettoyage.length) {
+    sauvegarderClientes(apresNettoyage);
+  }
 
   // Charger les paramètres depuis Google Sheets au démarrage (silencieux)
   chargerParametresDepuisSheets();

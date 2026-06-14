@@ -281,6 +281,12 @@
       <button class="btn-secondaire" onclick="exporterCSV()" style="margin-top:8px">📥 Exporter en CSV (Excel)</button>
     </div>
 
+    <div class="param-section">
+      <h3>Nettoyage</h3>
+      <p class="param-desc">Si vous voyez des données de test ou des chiffres incorrects, utilisez ce bouton pour effacer toutes les données locales et repartir proprement depuis Google Sheets.</p>
+      <button class="btn-secondaire" onclick="reinitialiserDepuisSheets()" style="border-color:#F5C0C0;color:var(--rouge)">🔄 Effacer et recharger depuis Google Sheets</button>
+    </div>
+
     <div id="msg-param" class="message-ok" style="display:none"></div>
     <button class="btn-secondaire" onclick="afficherOnglet('nouvelle-cliente', null)" style="margin-top:16px">← Retour à la saisie</button>
   </section>
