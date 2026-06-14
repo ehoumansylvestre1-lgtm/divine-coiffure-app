@@ -859,28 +859,6 @@ header {
 /* Cacher l'ancien label flottant */
 .barre-marker-label { display: none; }
 
-/* ===== BOUTONS DÉMO ===== */
-.demo-zone {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-
-.btn-demo {
-  flex: 1;
-  padding: 9px 12px;
-  background: transparent;
-  border: 1px dashed #BBA8D0;
-  border-radius: var(--rayon);
-  font-size: 12px;
-  color: var(--texte-doux);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-demo:active { background: var(--fond-carte2); }
-.btn-demo-effacer { color: var(--rouge); border-color: #F5C0C0; }
 
 /* ===== BOUTON SETTINGS HEADER ===== */
 .btn-settings {

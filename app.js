@@ -1,6 +1,6 @@
 // ===== DIVINE COIFFURE — Appli tablette =====
 
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxwB4o4-KhnaOZnV3g73M4tnofBe5EQhZBV8oX4b2OsnfXZQXxVKzXjV89G8M-UOUTz/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDNRRy0wbWbKRkAaNpTx_BY8OC9UKZBWQoDiKyqlI5HAi-JS1gjGv7vsZxixVZMzhV/exec';
 
 const CHARGES_FIXES   = 200000;   // charges réelles (186k fixes + ~14k matériaux/produits)
 const OBJECTIF_CIBLE  = 280000;   // phase 1 : +80k de bénéfice net
@@ -678,7 +678,7 @@ function codeOublie() {
   const reponse = prompt('Entrez le code de secours du salon (demandez à Sylvestre) :');
   if (reponse === 'DIVINE2026') {
     localStorage.setItem('dc_pin', PIN_PAR_DEFAUT);
-    alert('✅ Code réinitialisé à 1234. Changez-le rapidement dans les paramètres.');
+    alert('✅ Code réinitialisé à 3126. Changez-le rapidement dans les paramètres.');
     saisiePin = '';
     mettreAJourPointsPin();
   } else {
@@ -903,6 +903,32 @@ function sauvegarderEquipe() {
   localStorage.setItem('dc_equipe', JSON.stringify(noms));
   peuplerSelectCoiffeuse();
   afficherMsgParam('✅ Équipe enregistrée.', true);
+  // Synchroniser les noms vers Google Sheets pour que tous les appareils les reçoivent
+  if (navigator.onLine) {
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parametres: { equipe: noms } })
+    }).catch(() => {});
+  }
+}
+
+async function chargerParametresDepuisSheets() {
+  if (!navigator.onLine) return;
+  try {
+    const resp = await fetch(GOOGLE_SCRIPT_URL + '?action=lire_parametres');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (data && Array.isArray(data.equipe) && data.equipe.length > 0) {
+      localStorage.setItem('dc_equipe', JSON.stringify(data.equipe));
+      peuplerSelectCoiffeuse();
+      // Mettre à jour les champs dans les paramètres si le panneau est visible
+      ['equipe-1','equipe-2','equipe-3'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) el.value = data.equipe[i] || '';
+      });
+    }
+  } catch { /* silence — fonctionnement offline normal */ }
 }
 
 function changerPinResponsable() {
@@ -972,61 +998,6 @@ async function synchroniserDepuisSheets() {
   }
 }
 
-// ===== DONNÉES DE DÉMONSTRATION =====
-
-function chargerDemoData() {
-  if (!confirm('Charger 4 semaines de données démo ? (vos données existantes sont conservées)')) return;
-  const clientes = chargerClientes();
-  const today = new Date();
-  const demoEntrees = [];
-  const prenoms = ['Adjoua','Akissi','Amoin','Bintou','Cécile','Fanta','Grace','Marie','Sandrine','Yasmine'];
-  const tels = ['07 12 34 56 78','05 87 65 43 21','01 23 45 67 89','07 56 78 90 12','07 00 11 22 33'];
-  const scenarios = [
-    { s:'coiffure',      montants:[2500,3000,3500,5000,7000], poids:4 },
-    { s:'meches',        montants:[2200,3000,3500,4500,5500], poids:2 },
-    { s:'onglerie',      montants:[2500,3000,3500],           poids:1 },
-    { s:'pose_perruque', montants:[5000,7000,10000],          poids:1 },
-    { s:'lave_cheveux',  montants:[1000,1500,2000],           poids:1 },
-  ];
-  const pool = [];
-  scenarios.forEach(s => { for(let i=0;i<s.poids;i++) pool.push(s); });
-
-  for (let j = 28; j >= 1; j--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - j);
-    const jourSem = d.getDay();
-    if (jourSem === 0) continue; // pas de dimanche
-    const dateStr = d.toISOString().slice(0,10);
-    // Jours creux lun-mer : 1-2 clientes / jeu-sam : 3-5
-    const nb = jourSem <= 3 ? (Math.random() < 0.25 ? 0 : Math.floor(Math.random()*2)+1) : Math.floor(Math.random()*3)+2;
-    for (let k=0; k<nb; k++) {
-      const svc = pool[Math.floor(Math.random()*pool.length)];
-      const montant = svc.montants[Math.floor(Math.random()*svc.montants.length)];
-      const hr = String(9 + k*2).padStart(2,'0') + ':' + (Math.random()<0.5?'00':'30');
-      demoEntrees.push({
-        id: dateStr + '-demo-' + k,
-        date: dateStr, heure: hr,
-        prenom: prenoms[Math.floor(Math.random()*prenoms.length)],
-        telephone: tels[Math.floor(Math.random()*tels.length)],
-        service: svc.s, montant, note: '', statut_sync: 'en_attente'
-      });
-    }
-  }
-  sauvegarderClientes([...clientes, ...demoEntrees]);
-  afficherHistorique();
-  if (periodeActuelle) rafraichirStats();
-  alert(`✅ ${demoEntrees.length} prestations démo chargées.`);
-}
-
-function effacerDemoData() {
-  if (!confirm('Effacer TOUTES les données démo (les vraies données sont conservées) ?')) return;
-  const clientes = chargerClientes().filter(c => !c.id.includes('-demo-'));
-  sauvegarderClientes(clientes);
-  afficherHistorique();
-  if (periodeActuelle) rafraichirStats();
-  alert('✅ Données démo effacées.');
-}
-
 // ===== INIT =====
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -1056,9 +1027,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const marker = document.getElementById('barre-marker');
   if (marker) marker.style.left = MARKER_POURCENT + '%';
+
+  // Charger les paramètres depuis Google Sheets au démarrage (silencieux)
+  chargerParametresDepuisSheets();
 });
 
-window.addEventListener('online',  () => { mettreAJourStatutSync(true);  synchroniserEnSilence(); });
+window.addEventListener('online',  () => { mettreAJourStatutSync(true);  synchroniserEnSilence(); chargerParametresDepuisSheets(); });
 window.addEventListener('offline', () => mettreAJourStatutSync(false));
 
 setInterval(() => { if (navigator.onLine) synchroniserEnSilence(); }, 5 * 60 * 1000);
