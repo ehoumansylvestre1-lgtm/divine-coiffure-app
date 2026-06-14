@@ -319,7 +319,10 @@ function afficherHistorique() {
         ${c.note ? `<span class="entree-detail">${echapper(c.note)}</span>` : ''}
         <span class="entree-sync">${c.statut_sync === 'synchronise' ? '✅ Sync' : '📡 En attente'}</span>
       </div>
-      <span class="entree-montant">${formaterMontant(c.montant)}</span>`;
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="entree-montant">${formaterMontant(c.montant)}</span>
+        <button class="btn-modifier" onclick="ouvrirEdition('${echapper(c.id)}')" title="Modifier">✏️</button>
+      </div>`;
     liste.appendChild(item);
   });
 }
@@ -882,6 +885,71 @@ function changerPin() {
   if (nouveau !== confirm) { alert('Les codes ne correspondent pas.'); return; }
   localStorage.setItem('dc_pin', nouveau);
   alert('✅ Code modifié avec succès.');
+}
+
+// ===== MODIFICATION D'UNE ENTRÉE DU JOUR =====
+
+let entreeEnEdition = null;
+
+function ouvrirEdition(id) {
+  const clientes = chargerClientes();
+  const entree = clientes.find(c => c.id === id);
+  if (!entree) return;
+  entreeEnEdition = id;
+
+  document.getElementById('edit-prenom').value    = entree.prenom || '';
+  document.getElementById('edit-telephone').value = entree.telephone || '';
+  document.getElementById('edit-montant').value   = entree.montant || '';
+  document.getElementById('edit-note').value      = entree.note || '';
+
+  // Remplir le select service
+  const selService = document.getElementById('edit-service');
+  selService.innerHTML = Object.entries(SERVICES_NOMS)
+    .map(([v, l]) => `<option value="${v}"${entree.service === v ? ' selected' : ''}>${l}</option>`)
+    .join('');
+
+  // Remplir le select coiffeuse
+  const selCoif = document.getElementById('edit-coiffeuse');
+  const equipe = obtenirEquipe();
+  selCoif.innerHTML = '<option value="">— Non précisé —</option>' +
+    equipe.map(n => `<option value="${echapper(n)}"${entree.coiffeuse === n ? ' selected' : ''}>${echapper(n)}</option>`).join('');
+
+  document.getElementById('modal-edition').style.display = 'flex';
+}
+
+function fermerEdition(event) {
+  if (event && event.target !== document.getElementById('modal-edition')) return;
+  document.getElementById('modal-edition').style.display = 'none';
+  entreeEnEdition = null;
+}
+
+function sauvegarderEdition() {
+  if (!entreeEnEdition) return;
+  const prenom   = document.getElementById('edit-prenom').value.trim();
+  const montant  = parseInt(document.getElementById('edit-montant').value, 10);
+  if (!prenom)        { alert('Le prénom est obligatoire.'); return; }
+  if (isNaN(montant) || montant < 0) { alert('Montant invalide.'); return; }
+
+  const clientes = chargerClientes();
+  const idx = clientes.findIndex(c => c.id === entreeEnEdition);
+  if (idx === -1) return;
+
+  clientes[idx] = {
+    ...clientes[idx],
+    prenom,
+    telephone: document.getElementById('edit-telephone').value.trim(),
+    service:   document.getElementById('edit-service').value,
+    montant,
+    coiffeuse: document.getElementById('edit-coiffeuse').value,
+    note:      document.getElementById('edit-note').value.trim(),
+    statut_sync: 'en_attente'
+  };
+
+  sauvegarderClientes(clientes);
+  document.getElementById('modal-edition').style.display = 'none';
+  entreeEnEdition = null;
+  afficherHistorique();
+  if (periodeActuelle) rafraichirStats();
 }
 
 // ===== PARAMÈTRES — ÉQUIPE, PIN, SAUVEGARDE =====

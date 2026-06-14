@@ -859,6 +859,58 @@ header {
 /* Cacher l'ancien label flottant */
 .barre-marker-label { display: none; }
 
+/* ===== BOUTON MODIFIER SUR LES ENTRÉES ===== */
+.btn-modifier {
+  background: none;
+  border: 1px solid #D0B8E8;
+  border-radius: 6px;
+  color: var(--violet);
+  font-size: 15px;
+  padding: 6px 10px;
+  cursor: pointer;
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+.btn-modifier:active { background: #F0E6FF; }
+
+/* ===== MODAL MODIFICATION ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 0, 60, 0.55);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-boite {
+  background: var(--fond-carte);
+  border-radius: 18px 18px 0 0;
+  padding: 24px 20px 32px;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-titre {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--violet);
+  margin: 0 0 4px;
+}
+.modal-boutons {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+.modal-boutons .btn-principal,
+.modal-boutons .btn-secondaire {
+  flex: 1;
+}
+
 
 /* ===== BOUTON SETTINGS HEADER ===== */
 .btn-settings {
