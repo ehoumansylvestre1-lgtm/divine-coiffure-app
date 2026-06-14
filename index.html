@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Divine Coiffure — Saisie</title>
+  <title>Divine Coiffure — CRM</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6B00AA">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Divine CRM">
+  <link rel="apple-touch-icon" href="icon.svg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -52,12 +57,13 @@
     <div class="header-droite">
       <span id="mode-badge" class="mode-badge manager" style="display:none"></span>
       <div id="sync-status" class="sync-offline">📡 Hors ligne</div>
+      <button id="btn-settings" class="btn-settings" onclick="afficherOnglet('parametres', null)" style="display:none" title="Paramètres">⚙️</button>
     </div>
   </header>
 
   <nav class="onglets">
-    <button class="onglet actif" data-cible="nouvelle-cliente" onclick="afficherOnglet('nouvelle-cliente', this)">➕ Nouvelle</button>
-    <button class="onglet" data-cible="historique" onclick="afficherOnglet('historique', this)">📋 Aujourd'hui</button>
+    <button class="onglet actif" data-cible="nouvelle-cliente" onclick="afficherOnglet('nouvelle-cliente', this)">➕ Saisie</button>
+    <button class="onglet" data-cible="historique" onclick="afficherOnglet('historique', this)">📋 Journée</button>
     <button class="onglet" data-cible="statistiques" onclick="afficherOnglet('statistiques', this)">📊 Bilan</button>
   </nav>
 
@@ -82,6 +88,14 @@
     <div class="champ">
       <label for="telephone">Téléphone <span class="optionnel">(optionnel mais utile)</span></label>
       <input type="tel" id="telephone" placeholder="Ex : 07 04 75 04 40" autocomplete="off">
+    </div>
+
+    <!-- Coiffeuse (obligatoire) -->
+    <div class="champ">
+      <label for="coiffeuse">Réalisé par <span class="requis">*</span></label>
+      <select id="coiffeuse">
+        <option value="">— Qui a fait le service ? —</option>
+      </select>
     </div>
 
     <!-- Service -->
@@ -230,6 +244,51 @@
     </div>
   </section>
 
+  <!-- ===== PANNEAU PARAMÈTRES (responsable uniquement) ===== -->
+  <section id="parametres" class="panneau" style="display:none">
+    <h2>⚙️ Paramètres</h2>
+
+    <!-- Équipe -->
+    <div class="param-section">
+      <h3>Membres de l'équipe</h3>
+      <p class="param-desc">Ces noms apparaissent dans le champ "Réalisé par" lors de la saisie.</p>
+      <div class="champ"><label>Nom membre 1</label><input type="text" id="equipe-1" placeholder="Coiffeuse principale"></div>
+      <div class="champ"><label>Nom membre 2</label><input type="text" id="equipe-2" placeholder="Aide coiffure / onglerie"></div>
+      <div class="champ"><label>Nom membre 3 <span class="optionnel">(optionnel)</span></label><input type="text" id="equipe-3" placeholder="—"></div>
+      <button class="btn-principal" onclick="sauvegarderEquipe()">💾 Enregistrer l'équipe</button>
+    </div>
+
+    <!-- Changement PIN Responsable -->
+    <div class="param-section">
+      <h3>Code Responsable (accès complet)</h3>
+      <div class="champ"><label>Code actuel</label><input type="password" id="pin-r-ancien" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <div class="champ"><label>Nouveau code (4 chiffres)</label><input type="password" id="pin-r-nouveau" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <div class="champ"><label>Confirmer</label><input type="password" id="pin-r-confirm" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <button class="btn-secondaire" onclick="changerPinResponsable()">🔑 Changer le code Responsable</button>
+    </div>
+
+    <!-- Changement PIN Gestionnaire -->
+    <div class="param-section">
+      <h3>Code Gestionnaire (saisie + journée)</h3>
+      <div class="champ"><label>Nouveau code (4 chiffres)</label><input type="password" id="pin-g-nouveau" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <div class="champ"><label>Confirmer</label><input type="password" id="pin-g-confirm" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <p class="param-desc">⚠️ Le code Responsable actuel est requis pour valider.</p>
+      <div class="champ"><label>Votre code Responsable</label><input type="password" id="pin-g-auth" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <button class="btn-secondaire" onclick="changerPinGestionnaire()">🔑 Changer le code Gestionnaire</button>
+    </div>
+
+    <!-- Sauvegarde complète -->
+    <div class="param-section">
+      <h3>Sauvegarde des données</h3>
+      <p class="param-desc">Envoie TOUTES les données vers Google Sheets (y compris celles déjà synchronisées). Utile avant de changer de tablette.</p>
+      <button class="btn-secondaire" onclick="sauvegardeComplete()">☁️ Tout envoyer vers Google Sheets</button>
+      <button class="btn-secondaire" onclick="exporterCSV()" style="margin-top:8px">📥 Exporter en CSV (Excel)</button>
+    </div>
+
+    <div id="msg-param" class="message-ok" style="display:none"></div>
+    <button class="btn-secondaire" onclick="afficherOnglet('nouvelle-cliente', null)" style="margin-top:16px">← Retour à la saisie</button>
+  </section>
+
   <!-- ===== FOOTER ===== -->
   <footer class="footer-salon">
     <div class="footer-logo">
@@ -244,5 +303,10 @@
   </div><!-- fin app-contenu -->
 
   <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  </script>
 </body>
 </html>

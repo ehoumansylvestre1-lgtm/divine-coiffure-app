@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#6B00AA"/>
+  <rect x="0" y="360" width="512" height="152" rx="0" fill="#C4009A"/>
+  <rect x="0" y="360" width="512" height="20" fill="#9A0080"/>
+  <text x="256" y="310" font-family="Georgia,serif" font-size="260" font-weight="400" font-style="italic" text-anchor="middle" fill="white">D</text>
+  <text x="256" y="430" font-family="Arial,sans-serif" font-size="72" font-weight="900" text-anchor="middle" fill="white" letter-spacing="6">CRM</text>
+</svg>

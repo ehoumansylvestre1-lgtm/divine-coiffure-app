@@ -882,6 +882,56 @@ header {
 .btn-demo:active { background: var(--fond-carte2); }
 .btn-demo-effacer { color: var(--rouge); border-color: #F5C0C0; }
 
+/* ===== BOUTON SETTINGS HEADER ===== */
+.btn-settings {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.8);
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.btn-settings:active { background: rgba(255,255,255,0.3); }
+
+/* ===== PANNEAU PARAMÈTRES ===== */
+.param-section {
+  background: var(--fond-carte);
+  border-radius: var(--rayon);
+  padding: 18px;
+  margin-bottom: 16px;
+  border: 1px solid #EEE5FF;
+}
+
+.param-section h3 {
+  font-size: 14px;
+  color: var(--violet);
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.param-desc {
+  font-size: 13px;
+  color: var(--texte-doux);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+/* ===== COIFFEUSE DANS L'HISTORIQUE ===== */
+.entree-coiffeuse {
+  font-size: 12px;
+  color: var(--violet);
+  font-weight: 600;
+  background: #EEE5FF;
+  padding: 2px 8px;
+  border-radius: 10px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
 /* ===== ZONE SYNC ===== */
 .sync-zone {
   margin-top: 24px;

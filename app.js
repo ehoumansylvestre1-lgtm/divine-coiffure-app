@@ -31,6 +31,23 @@ const PRIX_PAR_SERVICE = {
   produits_soins: [1000, 1500, 2000, 3500, 5000]
 };
 
+// ===== ÉQUIPE (noms pour le champ "Réalisé par") =====
+
+function obtenirEquipe() {
+  try {
+    const e = JSON.parse(localStorage.getItem('dc_equipe') || 'null');
+    return Array.isArray(e) && e.length ? e : ['Coiffeuse principale', 'Aide coiffure / onglerie'];
+  } catch { return ['Coiffeuse principale', 'Aide coiffure / onglerie']; }
+}
+
+function peuplerSelectCoiffeuse() {
+  const sel = document.getElementById('coiffeuse');
+  if (!sel) return;
+  const equipe = obtenirEquipe().filter(n => n && n.trim());
+  sel.innerHTML = '<option value="">— Qui a fait le service ? —</option>' +
+    equipe.map(n => `<option value="${echapper(n)}">${echapper(n)}</option>`).join('');
+}
+
 // ===== UTILS =====
 
 function dateAujourdhui() {
@@ -187,11 +204,13 @@ function selectionnerCliente(prenom, telephone) {
 function enregistrerCliente() {
   const prenom    = document.getElementById('prenom').value.trim();
   const telephone = document.getElementById('telephone').value.trim();
+  const coiffeuse = document.getElementById('coiffeuse').value;
   const service   = document.getElementById('service').value;
   const montant   = parseFloat(document.getElementById('montant').value);
   const note      = document.getElementById('note').value.trim();
 
-  if (!service)              { afficherMessage('Choisissez une prestation.', false); return; }
+  if (!coiffeuse)               { afficherMessage('Sélectionnez qui a réalisé le service.', false); return; }
+  if (!service)                 { afficherMessage('Choisissez une prestation.', false); return; }
   if (!montant || montant <= 0) { afficherMessage('Entrez un montant valide.', false); return; }
 
   const entree = {
@@ -200,6 +219,7 @@ function enregistrerCliente() {
     heure: heureActuelle(),
     prenom: prenom || 'Anonyme',
     telephone: telephone,
+    coiffeuse: coiffeuse,
     service: service,
     montant: montant,
     note: note,
@@ -211,11 +231,12 @@ function enregistrerCliente() {
   sauvegarderClientes(clientes);
 
   // Reset formulaire
-  document.getElementById('prenom').value    = '';
-  document.getElementById('telephone').value = '';
-  document.getElementById('service').value   = '';
-  document.getElementById('montant').value   = '';
-  document.getElementById('note').value      = '';
+  document.getElementById('prenom').value     = '';
+  document.getElementById('telephone').value  = '';
+  document.getElementById('coiffeuse').value  = '';
+  document.getElementById('service').value    = '';
+  document.getElementById('montant').value    = '';
+  document.getElementById('note').value       = '';
   document.getElementById('suggestions-box').style.display = 'none';
   document.getElementById('prix-rapides').style.display = 'none';
   document.querySelectorAll('.prix-chip').forEach(b => b.classList.remove('selectionne'));
@@ -294,6 +315,7 @@ function afficherHistorique() {
       <div class="entree-info">
         <span class="entree-nom">${echapper(c.prenom)}${c.telephone ? ' · ' + echapper(c.telephone) : ''}</span>
         <span class="entree-detail">${echapper(SERVICES_NOMS[c.service] || c.service)} · ${echapper(c.heure)}</span>
+        ${c.coiffeuse ? `<span class="entree-coiffeuse">✂️ ${echapper(c.coiffeuse)}</span>` : ''}
         ${c.note ? `<span class="entree-detail">${echapper(c.note)}</span>` : ''}
         <span class="entree-sync">${c.statut_sync === 'synchronise' ? '✅ Sync' : '📡 En attente'}</span>
       </div>
@@ -590,12 +612,21 @@ function pinStocke() { return pinManagerStocke(); }
 function configurerModeAcces() {
   const ongletBilan = document.querySelector('.onglet[data-cible="statistiques"]');
   const badge       = document.getElementById('mode-badge');
+  const btnSettings = document.getElementById('btn-settings');
   if (modeAcces === 'employe') {
     if (ongletBilan) ongletBilan.style.display = 'none';
     if (badge) { badge.textContent = '👤 Gestionnaire'; badge.className = 'mode-badge gestionnaire'; badge.style.display = 'block'; }
+    if (btnSettings) btnSettings.style.display = 'none';
   } else {
     if (ongletBilan) ongletBilan.style.display = '';
     if (badge) { badge.textContent = '👑 Responsable'; badge.className = 'mode-badge manager'; badge.style.display = 'block'; }
+    if (btnSettings) btnSettings.style.display = 'block';
+    // Pré-remplir les noms d'équipe dans les paramètres
+    const equipe = obtenirEquipe();
+    ['equipe-1','equipe-2','equipe-3'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.value = equipe[i] || '';
+    });
   }
 }
 
@@ -621,6 +652,7 @@ function deverrouiller() {
   saisiePin = '';
   mettreAJourPointsPin();
   configurerModeAcces();
+  peuplerSelectCoiffeuse();
   afficherHistorique();
 }
 
@@ -850,6 +882,94 @@ function changerPin() {
   if (nouveau !== confirm) { alert('Les codes ne correspondent pas.'); return; }
   localStorage.setItem('dc_pin', nouveau);
   alert('✅ Code modifié avec succès.');
+}
+
+// ===== PARAMÈTRES — ÉQUIPE, PIN, SAUVEGARDE =====
+
+function afficherMsgParam(texte, ok) {
+  const el = document.getElementById('msg-param');
+  if (!el) return;
+  el.textContent   = texte;
+  el.style.display = 'block';
+  el.style.color   = ok ? '#0A7A3A' : '#C0001A';
+  setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+function sauvegarderEquipe() {
+  const noms = ['equipe-1','equipe-2','equipe-3']
+    .map(id => document.getElementById(id)?.value.trim())
+    .filter(Boolean);
+  if (noms.length === 0) { afficherMsgParam('Entrez au moins un nom.', false); return; }
+  localStorage.setItem('dc_equipe', JSON.stringify(noms));
+  peuplerSelectCoiffeuse();
+  afficherMsgParam('✅ Équipe enregistrée.', true);
+}
+
+function changerPinResponsable() {
+  const ancien  = document.getElementById('pin-r-ancien')?.value;
+  const nouveau = document.getElementById('pin-r-nouveau')?.value;
+  const confirm = document.getElementById('pin-r-confirm')?.value;
+  if (ancien !== pinManagerStocke()) { afficherMsgParam('Code actuel incorrect.', false); return; }
+  if (!/^\d{4}$/.test(nouveau))      { afficherMsgParam('Le code doit être 4 chiffres.', false); return; }
+  if (nouveau !== confirm)            { afficherMsgParam('Les codes ne correspondent pas.', false); return; }
+  localStorage.setItem('dc_pin', nouveau);
+  ['pin-r-ancien','pin-r-nouveau','pin-r-confirm'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  afficherMsgParam('✅ Code Responsable mis à jour.', true);
+}
+
+function changerPinGestionnaire() {
+  const auth    = document.getElementById('pin-g-auth')?.value;
+  const nouveau = document.getElementById('pin-g-nouveau')?.value;
+  const confirm = document.getElementById('pin-g-confirm')?.value;
+  if (auth !== pinManagerStocke())   { afficherMsgParam('Code Responsable incorrect.', false); return; }
+  if (!/^\d{4}$/.test(nouveau))      { afficherMsgParam('Le code doit être 4 chiffres.', false); return; }
+  if (nouveau !== confirm)            { afficherMsgParam('Les codes ne correspondent pas.', false); return; }
+  localStorage.setItem('dc_pin_employe', nouveau);
+  ['pin-g-auth','pin-g-nouveau','pin-g-confirm'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  afficherMsgParam('✅ Code Gestionnaire mis à jour.', true);
+}
+
+async function sauvegardeComplete() {
+  const clientes = chargerClientes();
+  if (clientes.length === 0) { alert('Aucune donnée à sauvegarder.'); return; }
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ donnees: clientes, mode: 'complet' })
+    });
+    sauvegarderClientes(clientes.map(c => ({ ...c, statut_sync: 'synchronise' })));
+    sauvegarderDernierSync();
+    mettreAJourStatutSync(true);
+    afficherMsgParam(`✅ ${clientes.length} entrée(s) envoyées vers Google Sheets.`, true);
+  } catch {
+    afficherMsgParam('❌ Échec. Vérifiez la connexion internet.', false);
+  }
+}
+
+async function synchroniserDepuisSheets() {
+  if (!navigator.onLine) { alert('Connexion requise pour charger depuis Google Sheets.'); return; }
+  try {
+    const depuis = new Date(); depuis.setDate(depuis.getDate() - 60);
+    const url = GOOGLE_SCRIPT_URL + '?action=lire&depuis=' + depuis.toISOString().slice(0,10);
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!Array.isArray(data)) throw new Error('Format invalide');
+    const local   = chargerClientes();
+    const idsLocal = new Set(local.map(c => c.id));
+    const nouveaux = data.filter(c => !idsLocal.has(c.id));
+    if (nouveaux.length > 0) {
+      sauvegarderClientes([...local, ...nouveaux]);
+      afficherHistorique();
+      if (periodeActuelle) rafraichirStats();
+      afficherMsgParam(`✅ ${nouveaux.length} entrée(s) importée(s) depuis Google Sheets.`, true);
+    } else {
+      afficherMsgParam('✅ Données déjà à jour sur cet appareil.', true);
+    }
+  } catch (err) {
+    afficherMsgParam('⚠️ Impossible de lire depuis Google Sheets : ' + err.message, false);
+  }
 }
 
 // ===== DONNÉES DE DÉMONSTRATION =====
