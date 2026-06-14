@@ -6,7 +6,10 @@ const CHARGES_FIXES   = 200000;   // charges réelles (186k fixes + ~14k matéri
 const OBJECTIF_CIBLE  = 280000;   // phase 1 : +80k de bénéfice net
 const MARKER_POURCENT = Math.round((CHARGES_FIXES / OBJECTIF_CIBLE) * 100); // ~71%
 
-const PIN_PAR_DEFAUT  = '1234';   // changer via le bouton ⚙️ dans l'appli
+const PIN_MANAGER_DEFAUT = '1234'; // responsable (Mme Sylvestre / Sylvestre)
+const PIN_EMPLOYE_DEFAUT = '0000'; // employée — accès limité (saisie + résumé jour)
+const PIN_PAR_DEFAUT     = PIN_MANAGER_DEFAUT;
+let modeAcces = null; // 'manager' ou 'employe'
 
 const SERVICES_NOMS = {
   coiffure:       'Coiffure',
@@ -409,6 +412,8 @@ function afficherStatistiques(filtrées, labelPeriode) {
 
   afficherClientesARappeler(chargerClientes());
 
+  if (modeAcces === 'manager') afficherRecommandations(filtrées);
+
   const sync = chargerDernierSync();
   document.getElementById('derniere-sync').textContent =
     sync ? 'Dernière sync : ' + sync : 'Jamais synchronisé';
@@ -534,20 +539,58 @@ function exporterCSV() {
   URL.revokeObjectURL(url);
 }
 
+// ===== NAVIGATION ONGLETS =====
+
+function afficherOnglet(id, btn) {
+  if (id === 'statistiques' && modeAcces === 'employe') return;
+
+  document.querySelectorAll('.panneau').forEach(p => {
+    p.style.display = 'none';
+    p.classList.remove('actif');
+  });
+  document.querySelectorAll('.onglet').forEach(b => b.classList.remove('actif'));
+
+  const panneau = document.getElementById(id);
+  if (panneau) { panneau.style.display = 'block'; panneau.classList.add('actif'); }
+  if (btn) btn.classList.add('actif');
+
+  if (id === 'historique')   afficherHistorique();
+  if (id === 'statistiques') rafraichirStats();
+}
+
 // ===== CODE PIN =====
 
 let saisiePin = '';
 
-function pinStocke() {
-  return localStorage.getItem('dc_pin') || PIN_PAR_DEFAUT;
+function pinManagerStocke() {
+  return localStorage.getItem('dc_pin') || PIN_MANAGER_DEFAUT;
+}
+
+function pinEmployeStocke() {
+  return localStorage.getItem('dc_pin_employe') || PIN_EMPLOYE_DEFAUT;
+}
+
+function pinStocke() { return pinManagerStocke(); }
+
+function configurerModeAcces() {
+  const ongletBilan = document.querySelector('.onglet[data-cible="statistiques"]');
+  const badge       = document.getElementById('mode-badge');
+  if (modeAcces === 'employe') {
+    if (ongletBilan) ongletBilan.style.display = 'none';
+    if (badge) { badge.textContent = '👤 Employée'; badge.className = 'mode-badge employe'; badge.style.display = 'block'; }
+  } else {
+    if (ongletBilan) ongletBilan.style.display = '';
+    if (badge) { badge.textContent = '👑 Responsable'; badge.className = 'mode-badge manager'; badge.style.display = 'block'; }
+  }
 }
 
 function verifierPin(code) {
-  if (code === pinStocke()) {
-    document.getElementById('ecran-pin').style.display = 'none';
-    document.getElementById('app-contenu').style.display = 'block';
-    saisiePin = '';
-    mettreAJourPointsPin();
+  if (code === pinManagerStocke()) {
+    modeAcces = 'manager';
+    deverrouiller();
+  } else if (code === pinEmployeStocke()) {
+    modeAcces = 'employe';
+    deverrouiller();
   } else {
     const erreur = document.getElementById('pin-erreur');
     erreur.style.display = 'block';
@@ -555,6 +598,15 @@ function verifierPin(code) {
     saisiePin = '';
     mettreAJourPointsPin();
   }
+}
+
+function deverrouiller() {
+  document.getElementById('ecran-pin').style.display = 'none';
+  document.getElementById('app-contenu').style.display = 'block';
+  saisiePin = '';
+  mettreAJourPointsPin();
+  configurerModeAcces();
+  afficherHistorique();
 }
 
 function appuyerTouche(val) {
@@ -587,6 +639,96 @@ function codeOublie() {
   }
 }
 
+// ===== RECOMMANDATIONS AUTOMATIQUES =====
+
+function genererRecommandations(filtrees) {
+  const recs = [];
+  const today = new Date();
+  const jourDuMois   = today.getDate();
+  const totalJours   = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const joursRestants = totalJours - jourDuMois;
+  const ca = filtrees.reduce((s, c) => s + c.montant, 0);
+
+  // Projection fin de mois (uniquement en vue mois actuel)
+  if (periodeActuelle === 'mois-actuel' && jourDuMois > 0) {
+    const projete = Math.round((ca / jourDuMois) * totalJours);
+    if (projete >= OBJECTIF_CIBLE) {
+      recs.push({ type: 'succes', icone: '🏆', titre: 'Excellent rythme !',
+        texte: `À ce rythme, vous projetez ${formaterMontant(projete)} pour le mois. L'objectif de ${formaterMontant(OBJECTIF_CIBLE)} est en vue !` });
+    } else if (joursRestants > 0) {
+      const parJour = Math.round((OBJECTIF_CIBLE - ca) / joursRestants);
+      recs.push({ type: 'action', icone: '🎯', titre: 'Pour atteindre l\'objectif',
+        texte: `Il manque ${formaterMontant(OBJECTIF_CIBLE - ca)} en ${joursRestants} jours restants, soit ${formaterMontant(parJour)}/jour. Propulsion promo ce week-end !` });
+    }
+  }
+
+  // Onglerie sous-exploitée
+  const txOnglerie = filtrees.filter(c => c.service === 'onglerie').length;
+  if (txOnglerie < 4) {
+    recs.push({ type: 'alerte', icone: '💅', titre: `Onglerie : ${txOnglerie} cliente(s) seulement`,
+      texte: `La formation coûte 100 000 FCFA — rentabilisez-la. À chaque visite coiffure, proposez : "Je vous fais aussi les ongles ?" — 3 500 FCFA de plus.` });
+  }
+
+  // Mèches qui progressent → encourager
+  const nbMeches = filtrees.filter(c => c.service === 'meches').length;
+  if (nbMeches >= 6) {
+    const caMeches = filtrees.filter(c => c.service === 'meches').reduce((s, c) => s + c.montant, 0);
+    recs.push({ type: 'succes', icone: '💇', titre: 'Les mèches cartonnent !',
+      texte: `${nbMeches} clientes mèches pour ${formaterMontant(caMeches)}. Continuez à présenter le stock aux clientes coiffure — c'est votre meilleur levier de croissance.` });
+  }
+
+  // Clientes à rappeler
+  const toutes = chargerClientes();
+  const vuesRappel = {};
+  const maintenant = new Date();
+  toutes.forEach(c => {
+    if (c.telephone && (!vuesRappel[c.telephone] || c.date > vuesRappel[c.telephone].date))
+      vuesRappel[c.telephone] = c;
+  });
+  const nbARappeler = Object.values(vuesRappel)
+    .filter(c => Math.floor((maintenant - new Date(c.date)) / 86400000) >= 21).length;
+  if (nbARappeler > 0) {
+    recs.push({ type: 'action', icone: '📞', titre: `${nbARappeler} cliente(s) à relancer maintenant`,
+      texte: `Ces clientes n'ont pas été vues depuis plus de 3 semaines. Un message WhatsApp aujourd'hui peut en ramener 2-3 cette semaine. Allez dans "Aujourd'hui" pour voir leurs numéros.` });
+  }
+
+  // Journées creuses (lun-mer) si assez de données
+  if (filtrees.length >= 10) {
+    const caCreux = filtrees
+      .filter(c => { const j = new Date(c.date).getDay(); return j >= 1 && j <= 3; })
+      .reduce((s, c) => s + c.montant, 0);
+    const semaines = Math.ceil(jourDuMois / 7);
+    const moyCreux = semaines > 0 ? caCreux / (semaines * 3) : 0;
+    if (moyCreux < 6000) {
+      recs.push({ type: 'alerte', icone: '📅', titre: 'Lundi–Mercredi : jours creux',
+        texte: `Moyenne ${formaterMontant(Math.round(moyCreux))}/jour sur lun-mer. Publiez une promo WhatsApp Status le dimanche soir ("Promo lundi !") pour remplir ces jours calmes.` });
+    }
+  }
+
+  // Si aucune recommandation
+  if (recs.length === 0 && filtrees.length === 0) {
+    recs.push({ type: 'info', icone: 'ℹ️', titre: 'Pas encore de données',
+      texte: 'Commencez à enregistrer des prestations — le système produira des conseils personnalisés dès que vous aurez des données.' });
+  }
+
+  return recs;
+}
+
+function afficherRecommandations(filtrees) {
+  const div = document.getElementById('liste-recommandations');
+  if (!div) return;
+  const recs = genererRecommandations(filtrees);
+  div.innerHTML = '';
+  recs.forEach(r => {
+    const card = document.createElement('div');
+    card.className = `recommandation-card ${r.type}`;
+    card.innerHTML = `
+      <div class="rec-header"><span class="rec-icone">${r.icone}</span><strong class="rec-titre">${echapper(r.titre)}</strong></div>
+      <p class="rec-texte">${echapper(r.texte)}</p>`;
+    div.appendChild(card);
+  });
+}
+
 function changerPin() {
   const ancien  = prompt('Entrez votre code actuel :');
   if (ancien !== pinStocke()) { alert('Code incorrect.'); return; }
@@ -601,9 +743,13 @@ function changerPin() {
 // ===== INIT =====
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Afficher écran PIN au démarrage
   document.getElementById('ecran-pin').style.display   = 'flex';
   document.getElementById('app-contenu').style.display = 'none';
+
+  // Afficher le premier panneau
+  document.querySelectorAll('.panneau').forEach((p, i) => {
+    p.style.display = i === 0 ? 'block' : 'none';
+  });
 
   document.getElementById('prenom').addEventListener('input', function () {
     afficherSuggestions(rechercherClientesExistantes(this.value));
@@ -616,7 +762,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Positionner le marqueur 186k sur la barre
   const marker = document.getElementById('barre-marker');
   if (marker) marker.style.left = MARKER_POURCENT + '%';
 });

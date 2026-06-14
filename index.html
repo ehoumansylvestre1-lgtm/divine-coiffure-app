@@ -49,13 +49,16 @@
       <span class="divine">Divine</span>
       <span class="coiffure">COIFFURE</span>
     </div>
-    <div id="sync-status" class="sync-offline">📡 Hors ligne</div>
+    <div class="header-droite">
+      <span id="mode-badge" class="mode-badge manager" style="display:none"></span>
+      <div id="sync-status" class="sync-offline">📡 Hors ligne</div>
+    </div>
   </header>
 
   <nav class="onglets">
-    <button class="onglet actif" onclick="afficherOnglet('nouvelle-cliente')">➕ Nouvelle</button>
-    <button class="onglet" onclick="afficherOnglet('historique')">📋 Aujourd'hui</button>
-    <button class="onglet" onclick="afficherOnglet('statistiques')">📊 Bilan</button>
+    <button class="onglet actif" data-cible="nouvelle-cliente" onclick="afficherOnglet('nouvelle-cliente', this)">➕ Nouvelle</button>
+    <button class="onglet" data-cible="historique" onclick="afficherOnglet('historique', this)">📋 Aujourd'hui</button>
+    <button class="onglet" data-cible="statistiques" onclick="afficherOnglet('statistiques', this)">📊 Bilan</button>
   </nav>
 
   <!-- ===== ONGLET 1 : NOUVELLE CLIENTE ===== -->
@@ -185,8 +188,8 @@
       </div>
       <div class="barre-legende">
         <span>0</span>
-        <span class="legende-charges">186 000</span>
-        <span class="legende-objectif">242 000 FCFA</span>
+        <span class="legende-charges">200 000</span>
+        <span class="legende-objectif">280 000 FCFA</span>
       </div>
       <div id="statut-mois" class="statut">—</div>
     </div>
@@ -197,6 +200,11 @@
     <h3>Clientes à rappeler (absentes &gt; 3 semaines)</h3>
     <div id="clientes-a-rappeler">
       <p class="vide">Aucune cliente inactive détectée.</p>
+    </div>
+
+    <div id="recommandations-box" class="recommandations-box">
+      <h3>💡 Conseils du système</h3>
+      <div id="liste-recommandations"></div>
     </div>
 
     <div class="sync-zone">

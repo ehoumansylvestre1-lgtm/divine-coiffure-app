@@ -802,3 +802,85 @@ header {
   color: var(--texte-doux);
   margin-bottom: 10px;
 }
+
+/* ===== BADGE MODE ACCÈS ===== */
+.header-droite {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.mode-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.mode-badge.manager {
+  background: rgba(255,215,0,0.25);
+  color: #FFE066;
+  border: 1px solid rgba(255,215,0,0.4);
+}
+
+.mode-badge.employe {
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.6);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* ===== RECOMMANDATIONS ===== */
+.recommandations-box {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.recommandations-box h3 {
+  font-size: 12px;
+  color: var(--texte-doux);
+  margin: 24px 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+.recommandation-card {
+  background: var(--fond-carte);
+  border-radius: var(--rayon);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border-left: 4px solid var(--violet);
+  box-shadow: 0 2px 6px rgba(107,0,170,0.07);
+}
+
+.recommandation-card.succes  { border-left-color: var(--vert); }
+.recommandation-card.action  { border-left-color: var(--violet); }
+.recommandation-card.alerte  { border-left-color: var(--orange); }
+.recommandation-card.info    { border-left-color: var(--texte-doux); }
+
+.rec-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.rec-icone {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.rec-titre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texte);
+}
+
+.rec-texte {
+  font-size: 13px;
+  color: var(--texte-doux);
+  line-height: 1.55;
+  margin: 0;
+}
