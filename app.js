@@ -575,6 +575,18 @@ function mettreAJourPointsPin() {
   });
 }
 
+function codeOublie() {
+  const reponse = prompt('Entrez le code de secours du salon (demandez à Sylvestre) :');
+  if (reponse === 'DIVINE2026') {
+    localStorage.setItem('dc_pin', PIN_PAR_DEFAUT);
+    alert('✅ Code réinitialisé à 1234. Changez-le rapidement dans les paramètres.');
+    saisiePin = '';
+    mettreAJourPointsPin();
+  } else {
+    alert('Code de secours incorrect. Contactez Sylvestre.');
+  }
+}
+
 function changerPin() {
   const ancien  = prompt('Entrez votre code actuel :');
   if (ancien !== pinStocke()) { alert('Code incorrect.'); return; }

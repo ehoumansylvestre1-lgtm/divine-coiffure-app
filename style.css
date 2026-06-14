@@ -482,6 +482,19 @@ header {
   font-weight: 600;
 }
 
+.pin-oublie {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 8px;
+  text-decoration: underline;
+  padding: 4px;
+}
+
+.pin-oublie:active { color: rgba(255,255,255,0.8); }
+
 .pin-clavier {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
