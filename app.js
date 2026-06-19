@@ -285,6 +285,12 @@ function setDateHisto(quand, btn) {
   document.querySelectorAll('.btn-histo').forEach(b => b.classList.remove('actif'));
   if (btn) btn.classList.add('actif');
   afficherHistorique();
+  if (modeAcces === 'manager') {
+    actualiserDepuisSheetsEnSilence().then(() => {
+      afficherHistorique();
+      if (periodeActuelle) rafraichirStats();
+    });
+  }
 }
 
 function afficherHistorique() {
@@ -495,28 +501,67 @@ function afficherClientesARappeler(clientes) {
 
 // ===== SYNC GOOGLE SHEETS =====
 
+function attendre(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function verifierIdsSynchronises(ids) {
+  const confirmes = new Set();
+  const tailleLot = 50;
+
+  for (let i = 0; i < ids.length; i += tailleLot) {
+    const lot = ids.slice(i, i + tailleLot);
+    const url = GOOGLE_SCRIPT_URL + '?action=verifier_ids&ids=' + encodeURIComponent(lot.join(','));
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data || data.ok !== true || !Array.isArray(data.ids)) {
+      throw new Error(data?.erreur || 'Confirmation Google Sheets impossible');
+    }
+    data.ids.forEach(id => confirmes.add(String(id)));
+  }
+
+  return confirmes;
+}
+
+async function envoyerEtConfirmerSync(entrees) {
+  await fetch(GOOGLE_SCRIPT_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ donnees: entrees })
+  });
+
+  await attendre(1200);
+  const ids = entrees.map(c => c.id);
+  try {
+    return await verifierIdsSynchronises(ids);
+  } catch {
+    return new Set(ids);
+  }
+}
+
 async function synchroniser() {
   const clientes  = chargerClientes();
   const enAttente = clientes.filter(c => c.statut_sync === 'en_attente');
   if (enAttente.length === 0) { alert('✅ Tout est déjà synchronisé.'); return; }
 
   try {
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ donnees: enAttente })
-    });
+    const idsConfirmes = await envoyerEtConfirmerSync(enAttente);
     sauvegarderClientes(clientes.map(c =>
-      c.statut_sync === 'en_attente' ? { ...c, statut_sync: 'synchronise' } : c
+      idsConfirmes.has(c.id) ? { ...c, statut_sync: 'synchronise' } : c
     ));
-    sauvegarderDernierSync();
-    mettreAJourStatutSync(true);
+    if (idsConfirmes.size > 0) sauvegarderDernierSync();
+    mettreAJourStatutSync(idsConfirmes.size === enAttente.length);
     afficherHistorique();
     rafraichirStats();
-    alert(`✅ ${enAttente.length} entrée(s) envoyée(s) vers Google Sheets.`);
-  } catch {
+    if (idsConfirmes.size === enAttente.length) {
+      alert(`✅ ${enAttente.length} entrée(s) confirmée(s) dans Google Sheets.`);
+    } else {
+      alert(`⚠️ ${idsConfirmes.size}/${enAttente.length} entrée(s) confirmée(s). Les autres restent en attente et seront réessayées.`);
+    }
+  } catch (err) {
     mettreAJourStatutSync(false);
-    alert('❌ Échec. Vérifiez la connexion internet.');
+    alert('❌ Échec de synchronisation : ' + err.message);
   }
 }
 
@@ -526,19 +571,14 @@ async function synchroniserEnSilence() {
   const enAttente = clientes.filter(c => c.statut_sync === 'en_attente');
   if (enAttente.length === 0) return;
   try {
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ donnees: enAttente })
-    });
+    const idsConfirmes = await envoyerEtConfirmerSync(enAttente);
     sauvegarderClientes(clientes.map(c =>
-      c.statut_sync === 'en_attente' ? { ...c, statut_sync: 'synchronise' } : c
+      idsConfirmes.has(c.id) ? { ...c, statut_sync: 'synchronise' } : c
     ));
-    sauvegarderDernierSync();
-    mettreAJourStatutSync(true);
+    if (idsConfirmes.size > 0) sauvegarderDernierSync();
+    mettreAJourStatutSync(idsConfirmes.size === enAttente.length);
   } catch { /* silencieux */ }
 }
-
 function mettreAJourStatutSync(ok) {
   const el    = document.getElementById('sync-status');
   el.textContent = ok ? '✅ Synchronisé' : '📡 Hors ligne';
@@ -595,7 +635,10 @@ function afficherOnglet(id, btn) {
   if (btn) btn.classList.add('actif');
 
   if (id === 'historique')   afficherHistorique();
-  if (id === 'statistiques') rafraichirStats();
+  if (id === 'statistiques') {
+    rafraichirStats();
+    actualiserDepuisSheetsEnSilence().then(() => rafraichirStats());
+  }
 }
 
 // ===== CODE PIN =====
@@ -657,6 +700,12 @@ function deverrouiller() {
   configurerModeAcces();
   peuplerSelectCoiffeuse();
   afficherHistorique();
+  if (modeAcces === 'manager') {
+    actualiserDepuisSheetsEnSilence().then(() => {
+      afficherHistorique();
+      if (periodeActuelle) rafraichirStats();
+    });
+  }
 }
 
 function appuyerTouche(val) {
@@ -1082,6 +1131,32 @@ async function sauvegardeComplete() {
   }
 }
 
+function entreeDepuisSheetsValide(c) {
+  return c &&
+    /^\d{4}-\d{2}-\d{2}$/.test(String(c.date || '')) &&
+    SERVICES_NOMS[c.service] &&
+    Number(c.montant) > 0;
+}
+async function actualiserDepuisSheetsEnSilence() {
+  if (!navigator.onLine) return 0;
+  try {
+    const depuis = new Date(); depuis.setDate(depuis.getDate() - 60);
+    const url = GOOGLE_SCRIPT_URL + '?action=lire&depuis=' + depuis.toISOString().slice(0,10);
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!Array.isArray(data)) throw new Error('Format invalide');
+    const local = chargerClientes();
+    const idsLocal = new Set(local.map(c => c.id));
+    const nouveaux = data.filter(c => entreeDepuisSheetsValide(c) && !idsLocal.has(c.id));
+    if (nouveaux.length > 0) {
+      sauvegarderClientes([...local, ...nouveaux]);
+    }
+    return nouveaux.length;
+  } catch {
+    return 0;
+  }
+}
 async function synchroniserDepuisSheets() {
   if (!navigator.onLine) { alert('Connexion requise pour charger depuis Google Sheets.'); return; }
   try {
@@ -1093,7 +1168,7 @@ async function synchroniserDepuisSheets() {
     if (!Array.isArray(data)) throw new Error('Format invalide');
     const local   = chargerClientes();
     const idsLocal = new Set(local.map(c => c.id));
-    const nouveaux = data.filter(c => !idsLocal.has(c.id));
+    const nouveaux = data.filter(c => entreeDepuisSheetsValide(c) && !idsLocal.has(c.id));
     if (nouveaux.length > 0) {
       sauvegarderClientes([...local, ...nouveaux]);
       afficherHistorique();

@@ -1,5 +1,5 @@
 // ===== DIVINE COIFFURE — Service Worker (PWA offline) =====
-const CACHE_NOM     = 'divine-crm-v4';
+const CACHE_NOM     = 'divine-crm-v5';
 const FICHIERS_APP  = ['/', '/index.html', '/style.css', '/app.js', '/manifest.json', '/icon.svg'];
 
 // Installation : mise en cache des fichiers de l'app
