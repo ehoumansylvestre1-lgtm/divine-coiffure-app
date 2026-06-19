@@ -1,6 +1,6 @@
 // ===== DIVINE COIFFURE — Appli tablette =====
 
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDNRRy0wbWbKRkAaNpTx_BY8OC9UKZBWQoDiKyqlI5HAi-JS1gjGv7vsZxixVZMzhV/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiSX-dIWTSXkwrUbb-05kLlZzmhB-HAdS6ILAELHVlUj4yDH5rIi8in8U-Y4D7sZdW/exec';
 
 const CHARGES_FIXES   = 200000;   // charges réelles (186k fixes + ~14k matériaux/produits)
 const OBJECTIF_CIBLE  = 280000;   // phase 1 : +80k de bénéfice net
